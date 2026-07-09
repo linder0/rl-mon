@@ -1,0 +1,50 @@
+# RL Baselines3 Zoo hyperparameters for PPO.
+#
+# Use with rl_zoo3, pointing at this file with --conf-file:
+#
+#   Train (reproduces this repo's tuned setup):
+#     python -m rl_zoo3.train --algo ppo --env Walker2d-v5 \
+#       -f logs --conf-file hyperparams/ppo.yml --seed 1
+#
+#   Tune with Optuna (TPE sampler + median pruning; search space is built into
+#   the Zoo, so you don't define it here):
+#     python -m rl_zoo3.train --algo ppo --env Walker2d-v5 \
+#       -f logs --conf-file hyperparams/ppo.yml \
+#       --optimize --n-trials 100 --n-jobs 4 \
+#       --sampler tpe --pruner median --n-evaluations 20
+#
+# These values mirror train.py's HYPERPARAMS (the RL-Zoo tuned MuJoCo config)
+# so Zoo runs are comparable to the runs already in runs/.
+
+Walker2d-v5: &mujoco-defaults
+  normalize: true            # VecNormalize on obs + reward (as in train.py)
+  n_envs: 8
+  policy: 'MlpPolicy'
+  n_timesteps: !!float 3e6
+  batch_size: 256
+  n_steps: 512
+  gamma: 0.999
+  learning_rate: !!float 3e-4
+  ent_coef: 0.0
+  clip_range: 0.2
+  n_epochs: 10
+  gae_lambda: 0.99
+  max_grad_norm: 0.5
+  vf_coef: 0.5
+  policy_kwargs: "dict(net_arch=[256, 256])"
+
+# The repo's default env. Same tuned family; shorter default budget.
+Hopper-v5:
+  <<: *mujoco-defaults
+  n_timesteps: !!float 1e6
+
+# Ant is a higher-DOF 3D quadruped: longer rollouts + standard MuJoCo PPO
+# discount/GAE (0.99 / 0.95) work better than Hopper's 0.999 / 0.99, and it
+# needs a bigger step budget. Mirrors train.py's TUNED_BY_ENV["ant"].
+Ant-v5:
+  <<: *mujoco-defaults
+  n_timesteps: !!float 5e6
+  n_steps: 2048
+  batch_size: 64
+  gamma: 0.99
+  gae_lambda: 0.95

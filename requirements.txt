@@ -1,0 +1,9 @@
+stable-baselines3>=2.9.0
+gymnasium[mujoco]>=1.3.0
+tensorboard>=2.21.0
+tqdm>=4.66
+rich>=13.0
+moviepy<2.0  # torch TensorBoard add_video imports moviepy.editor (removed in 2.x)
+rl_zoo3>=2.9.0  # PPO training + Optuna hyperparameter tuning CLI (uses hyperparams/ppo.yml)
+onnx>=1.16  # export trained policies to ONNX for the in-browser web viewer (see web/)
+onnxscript>=0.7  # required by torch.onnx.export (the ONNX exporter backend)

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RL MuJoCo — Web Viewer</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene"></canvas>
+
+      <div id="panel">
+        <div class="brand">RL&nbsp;MuJoCo<span>web viewer</span></div>
+
+        <label class="field">
+          <span>Environment</span>
+          <select id="env"></select>
+        </label>
+
+        <div class="row">
+          <button id="playpause" class="btn primary">Pause</button>
+          <button id="reset" class="btn">Reset</button>
+        </div>
+
+        <label class="field">
+          <span>Speed <b id="speedval">1.0×</b></span>
+          <input id="speed" type="range" min="0.1" max="3" step="0.1" value="1" />
+        </label>
+
+        <label class="checkbox">
+          <input id="follow" type="checkbox" checked />
+          <span>Follow camera</span>
+        </label>
+
+        <div id="stats"></div>
+        <div id="parity" class="parity"></div>
+      </div>
+
+      <aside id="statspanel">
+        <div class="sp-header">
+          <div class="sp-title" id="sp-title">Run stats</div>
+          <button id="stats-toggle" class="btn tiny">Hide</button>
+        </div>
+        <div id="statsbody">
+          <div class="chart-block">
+            <div class="chart-title">Runs <span class="muted">(click to load · ✓ to compare)</span></div>
+            <div id="run-table"></div>
+          </div>
+
+          <div id="summary-cards" class="cards"></div>
+
+          <div class="sp-section">Outcome <span class="muted">(✓ runs overlaid)</span></div>
+          <div class="chart-block">
+            <div class="chart-title">Eval reward <span class="muted">(mean ± std vs steps)</span></div>
+            <div id="chart-eval" class="chart"></div>
+          </div>
+          <div class="chart-block">
+            <div class="chart-title">Episode length <span class="muted">(survival vs steps)</span></div>
+            <div id="chart-eplen" class="chart"></div>
+          </div>
+
+          <div class="sp-section">Training diagnostics <span class="muted">(live run)</span></div>
+          <div class="chart-block">
+            <div class="chart-title">Episode reward <span class="muted">(rollout)</span></div>
+            <div id="chart-train" class="chart"></div>
+          </div>
+          <div class="chart-block">
+            <div class="chart-title">approx_kl <span class="muted">(update size — spikes = unstable)</span></div>
+            <div id="chart-kl" class="chart"></div>
+          </div>
+          <div class="chart-block">
+            <div class="chart-title">explained_variance <span class="muted">(value fit → 1)</span></div>
+            <div id="chart-ev" class="chart"></div>
+          </div>
+          <div class="chart-block">
+            <div class="chart-title">policy entropy <span class="muted">(exploration → lower)</span></div>
+            <div id="chart-entropy" class="chart"></div>
+          </div>
+
+          <div class="chart-block">
+            <div class="chart-title">Config <span class="muted">(live run)</span></div>
+            <div id="config-table"></div>
+          </div>
+        </div>
+      </aside>
+
+      <div id="netpanel">
+        <div class="np-header">
+          <div class="np-title">Policy network <span class="muted">(live activations)</span></div>
+          <button id="net-toggle" class="btn tiny">Hide</button>
+        </div>
+        <div id="netbody">
+          <div class="np-col">
+            <div class="np-sub">Actor <span class="muted">→ action</span></div>
+            <div class="np-canvas-wrap"><canvas id="netcanvas"></canvas></div>
+          </div>
+          <div class="np-col">
+            <div class="np-sub">Critic <span class="muted">→ value</span><b id="netvalue">—</b></div>
+            <div class="np-canvas-wrap"><canvas id="netcanvas2"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="loading">
+        <div class="spinner"></div>
+        <div id="loading-text">Loading MuJoCo…</div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

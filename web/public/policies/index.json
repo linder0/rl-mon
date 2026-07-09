@@ -1,0 +1,203 @@
+{
+  "envs": [
+    {
+      "env_id": "Hopper-v5",
+      "label": "hopper",
+      "runs": [
+        {
+          "id": "hopper__lambda_a10__final",
+          "run_name": "lambda_a10",
+          "variant": "final",
+          "onnx": "policies/hopper__lambda_a10__final.onnx",
+          "meta": "policies/hopper__lambda_a10__final.json",
+          "stats": "policies/hopper__lambda_a10__final.stats.json",
+          "model_xml": "models/hopper.xml",
+          "summary": {
+            "timesteps": 1007616,
+            "train_ep_rew_final": 1310.0,
+            "final_eval_mean": null,
+            "best_eval_mean": null,
+            "eval_ep_len_final": null,
+            "seed": 0
+          }
+        }
+      ]
+    },
+    {
+      "env_id": "Walker2d-v5",
+      "label": "walker2d",
+      "runs": [
+        {
+          "id": "walker2d__latest__best",
+          "run_name": "latest",
+          "variant": "best",
+          "onnx": "policies/walker2d__latest__best.onnx",
+          "meta": "policies/walker2d__latest__best.json",
+          "stats": "policies/walker2d__latest__best.stats.json",
+          "model_xml": "models/walker2d_v5.xml",
+          "summary": {
+            "timesteps": 3002368,
+            "train_ep_rew_final": 2448.8,
+            "final_eval_mean": 2210.9,
+            "best_eval_mean": 3456.0,
+            "eval_ep_len_final": 723.0,
+            "seed": 1
+          }
+        },
+        {
+          "id": "walker2d__latest__final",
+          "run_name": "latest",
+          "variant": "final",
+          "onnx": "policies/walker2d__latest__final.onnx",
+          "meta": "policies/walker2d__latest__final.json",
+          "stats": "policies/walker2d__latest__final.stats.json",
+          "model_xml": "models/walker2d_v5.xml",
+          "summary": {
+            "timesteps": 3002368,
+            "train_ep_rew_final": 2448.8,
+            "final_eval_mean": 2210.9,
+            "best_eval_mean": 3456.0,
+            "eval_ep_len_final": 723.0,
+            "seed": 1
+          }
+        },
+        {
+          "id": "walker2d__ppo_walker2d_3M_s1__best",
+          "run_name": "ppo_walker2d_3M_s1",
+          "variant": "best",
+          "onnx": "policies/walker2d__ppo_walker2d_3M_s1__best.onnx",
+          "meta": "policies/walker2d__ppo_walker2d_3M_s1__best.json",
+          "stats": "policies/walker2d__ppo_walker2d_3M_s1__best.stats.json",
+          "model_xml": "models/walker2d_v5.xml",
+          "summary": {
+            "timesteps": 3002368,
+            "train_ep_rew_final": 2448.8,
+            "final_eval_mean": 2210.9,
+            "best_eval_mean": 3456.0,
+            "eval_ep_len_final": 723.0,
+            "seed": 1
+          }
+        },
+        {
+          "id": "walker2d__ppo_walker2d_3M_s1__final",
+          "run_name": "ppo_walker2d_3M_s1",
+          "variant": "final",
+          "onnx": "policies/walker2d__ppo_walker2d_3M_s1__final.onnx",
+          "meta": "policies/walker2d__ppo_walker2d_3M_s1__final.json",
+          "stats": "policies/walker2d__ppo_walker2d_3M_s1__final.stats.json",
+          "model_xml": "models/walker2d_v5.xml",
+          "summary": {
+            "timesteps": 3002368,
+            "train_ep_rew_final": 2448.8,
+            "final_eval_mean": 2210.9,
+            "best_eval_mean": 3456.0,
+            "eval_ep_len_final": 723.0,
+            "seed": 1
+          }
+        },
+        {
+          "id": "walker2d__ppo_walker2d_3M_s2__best",
+          "run_name": "ppo_walker2d_3M_s2",
+          "variant": "best",
+          "onnx": "policies/walker2d__ppo_walker2d_3M_s2__best.onnx",
+          "meta": "policies/walker2d__ppo_walker2d_3M_s2__best.json",
+          "stats": "policies/walker2d__ppo_walker2d_3M_s2__best.stats.json",
+          "model_xml": "models/walker2d_v5.xml",
+          "summary": {
+            "timesteps": 3002368,
+            "train_ep_rew_final": 1986.0,
+            "final_eval_mean": 1644.5,
+            "best_eval_mean": 2550.4,
+            "eval_ep_len_final": 694.0,
+            "seed": 2
+          }
+        },
+        {
+          "id": "walker2d__ppo_walker2d_3M_s2__final",
+          "run_name": "ppo_walker2d_3M_s2",
+          "variant": "final",
+          "onnx": "policies/walker2d__ppo_walker2d_3M_s2__final.onnx",
+          "meta": "policies/walker2d__ppo_walker2d_3M_s2__final.json",
+          "stats": "policies/walker2d__ppo_walker2d_3M_s2__final.stats.json",
+          "model_xml": "models/walker2d_v5.xml",
+          "summary": {
+            "timesteps": 3002368,
+            "train_ep_rew_final": 1986.0,
+            "final_eval_mean": 1644.5,
+            "best_eval_mean": 2550.4,
+            "eval_ep_len_final": 694.0,
+            "seed": 2
+          }
+        },
+        {
+          "id": "walker2d__ppo_walker2d_3M_s3__best",
+          "run_name": "ppo_walker2d_3M_s3",
+          "variant": "best",
+          "onnx": "policies/walker2d__ppo_walker2d_3M_s3__best.onnx",
+          "meta": "policies/walker2d__ppo_walker2d_3M_s3__best.json",
+          "stats": "policies/walker2d__ppo_walker2d_3M_s3__best.stats.json",
+          "model_xml": "models/walker2d_v5.xml",
+          "summary": {
+            "timesteps": 3002368,
+            "train_ep_rew_final": 2513.4,
+            "final_eval_mean": 3168.7,
+            "best_eval_mean": 3362.2,
+            "eval_ep_len_final": 1000.0,
+            "seed": 3
+          }
+        },
+        {
+          "id": "walker2d__ppo_walker2d_3M_s3__final",
+          "run_name": "ppo_walker2d_3M_s3",
+          "variant": "final",
+          "onnx": "policies/walker2d__ppo_walker2d_3M_s3__final.onnx",
+          "meta": "policies/walker2d__ppo_walker2d_3M_s3__final.json",
+          "stats": "policies/walker2d__ppo_walker2d_3M_s3__final.stats.json",
+          "model_xml": "models/walker2d_v5.xml",
+          "summary": {
+            "timesteps": 3002368,
+            "train_ep_rew_final": 2513.4,
+            "final_eval_mean": 3168.7,
+            "best_eval_mean": 3362.2,
+            "eval_ep_len_final": 1000.0,
+            "seed": 3
+          }
+        },
+        {
+          "id": "walker2d__ppo_walker2d_run1__best",
+          "run_name": "ppo_walker2d_run1",
+          "variant": "best",
+          "onnx": "policies/walker2d__ppo_walker2d_run1__best.onnx",
+          "meta": "policies/walker2d__ppo_walker2d_run1__best.json",
+          "stats": "policies/walker2d__ppo_walker2d_run1__best.stats.json",
+          "model_xml": "models/walker2d_v5.xml",
+          "summary": {
+            "timesteps": 1003520,
+            "train_ep_rew_final": 2105.9,
+            "final_eval_mean": 2348.8,
+            "best_eval_mean": 2400.7,
+            "eval_ep_len_final": 1000.0,
+            "seed": 0
+          }
+        },
+        {
+          "id": "walker2d__ppo_walker2d_run1__final",
+          "run_name": "ppo_walker2d_run1",
+          "variant": "final",
+          "onnx": "policies/walker2d__ppo_walker2d_run1__final.onnx",
+          "meta": "policies/walker2d__ppo_walker2d_run1__final.json",
+          "stats": "policies/walker2d__ppo_walker2d_run1__final.stats.json",
+          "model_xml": "models/walker2d_v5.xml",
+          "summary": {
+            "timesteps": 1003520,
+            "train_ep_rew_final": 2105.9,
+            "final_eval_mean": 2348.8,
+            "best_eval_mean": 2400.7,
+            "eval_ep_len_final": 1000.0,
+            "seed": 0
+          }
+        }
+      ]
+    }
+  ]
+}

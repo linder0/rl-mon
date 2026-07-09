@@ -1,0 +1,15 @@
+.venv/
+runs/
+logs/
+*.db
+*.log
+__pycache__/
+*.pyc
+
+# Node / web build
+node_modules/
+web/dist/
+dist/
+
+# OS
+.DS_Store

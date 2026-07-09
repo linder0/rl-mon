@@ -1,0 +1,37 @@
+# RL Baselines3 Zoo hyperparameters for the PPO *tuning* (search) phase.
+#
+# This is a shorter-budget sibling of hyperparams/ppo.yml. During an Optuna
+# search each of N trials trains a full model, so the per-trial budget is the
+# main cost lever. We train each trial for ~1M steps (pruning kills the losers
+# even earlier) instead of the 3M used for final validation.
+#
+# WORKFLOW
+#   1. Search here (cheap, many trials):
+#        python -m rl_zoo3.train --algo ppo --env Walker2d-v5 \
+#          -f logs --conf-file hyperparams/ppo_tune.yml \
+#          --optimize --n-trials 100 --n-jobs 4 \
+#          --sampler tpe --pruner median --n-evaluations 20 \
+#          --storage sqlite:///logs/ppo_walker2d_study.db \
+#          --study-name walker2d_ppo_tune
+#
+#   2. Read off the winner:
+#        python best_params.py --study walker2d_ppo_tune
+#
+#   3. Validate the winner properly with the full budget across seeds via
+#      train.py (lands in runs/, works with enjoy.py):
+#        python best_params.py --study walker2d_ppo_tune --print-cmd --seeds 1 2 3
+#
+# The Optuna search space (learning_rate, n_steps, batch_size, gamma,
+# gae_lambda, clip_range, n_epochs, net_arch, activation_fn, ...) is built into
+# the Zoo's PPO sampler, so it is NOT defined here. The values below are only
+# the fixed budget/env settings that every trial shares.
+
+Walker2d-v5: &mujoco-tune
+  normalize: true            # VecNormalize on obs + reward (as in train.py)
+  n_envs: 8
+  policy: 'MlpPolicy'
+  n_timesteps: !!float 1e6   # short per-trial budget for the search phase
+
+Hopper-v5:
+  <<: *mujoco-tune
+  n_timesteps: !!float 5e5   # Hopper converges fast; even shorter is fine
