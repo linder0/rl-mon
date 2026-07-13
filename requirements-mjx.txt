@@ -1,0 +1,18 @@
+# GPU training stack (MJX physics + Brax PPO). Install this on the GPU box
+# (e.g. a Lambda instance); the CPU/laptop workflow keeps using requirements.txt.
+#
+#   pip install -r requirements-mjx.txt
+#   python -c "import jax; print(jax.devices())"   # must show a CUDA device
+#
+# On a machine without an NVIDIA GPU (local validation only), install jax
+# without the cuda extra instead: pip install jax brax>=0.14.2 mujoco-mjx ...
+
+# jax pinned <0.10: brax 0.14.2 still calls jax.device_put_replicated,
+# which jax 0.10 removed. flax pinned to match this jax.
+jax[cuda12]>=0.8,<0.10  # bundles CUDA libs; only needs the NVIDIA driver
+brax>=0.14.2,<0.15  # first PyPI release with LRSchedule.ADAPTIVE_KL (KL-adaptive LR)
+mujoco-mjx>=3.3
+flax>=0.10,<0.12
+optax>=0.2
+gymnasium[mujoco]>=1.3.0  # reference envs for mjx_envs/validate.py parity checks
+tensorboard>=2.21.0

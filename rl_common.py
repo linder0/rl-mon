@@ -7,18 +7,22 @@ without pulling in anything heavy beyond what it already uses.
 import json
 import os
 
-from torch import nn
-
 DEFAULT_ENV_ID = "Hopper-v5"
 
 # Policy activation functions, keyed by the names train.py's --activation-fn
 # and the RL-Zoo Optuna search use. Single source of truth for the mapping.
-ACTIVATION_FNS = {
-    "tanh": nn.Tanh,
-    "relu": nn.ReLU,
-    "elu": nn.ELU,
-    "leaky_relu": nn.LeakyReLU,
-}
+# torch is optional so the MJX/Brax venv (no torch) can import this module.
+try:
+    from torch import nn
+
+    ACTIVATION_FNS = {
+        "tanh": nn.Tanh,
+        "relu": nn.ReLU,
+        "elu": nn.ELU,
+        "leaky_relu": nn.LeakyReLU,
+    }
+except ImportError:  # torch-free environment (e.g. requirements-mjx.txt)
+    ACTIVATION_FNS = {}
 
 
 def env_label(env_id):

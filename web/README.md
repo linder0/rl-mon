@@ -1,4 +1,8 @@
-# RL MuJoCo — Web Viewer
+# RL MuJoCo — Web Viewer (legacy)
+
+> **Legacy:** this Vite app has been superseded by the Next.js viewer in
+> [`web-next/`](../web-next), which is now the primary viewer. It's kept for
+> reference and still works, but new features land in `web-next/`.
 
 Run your trained MuJoCo policies **live in the browser**: MuJoCo physics compiled
 to WebAssembly, the policy exported to ONNX, rendered with three.js/WebGL. No

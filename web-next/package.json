@@ -1,0 +1,40 @@
+{
+  "name": "rl-mon-web-next",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Next.js in-browser viewer for trained MuJoCo RL policies (WASM physics + ONNX policy + three.js WebGPU).",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "validate": "node scripts/validate.mjs"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.6.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.24.0",
+    "mujoco-js": "^0.0.7",
+    "next": "^15.1.0",
+    "next-themes": "^0.4.6",
+    "onnxruntime-web": "^1.19.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "shadcn": "^4.13.0",
+    "tailwind-merge": "^3.6.0",
+    "three": "^0.181.0",
+    "tw-animate-css": "^1.4.0",
+    "uplot": "^1.6.32"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.2",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.181.0",
+    "postcss": "^8.5.16",
+    "tailwindcss": "^4.3.2",
+    "typescript": "^5.6.0"
+  }
+}

@@ -1,4 +1,5 @@
 .venv/
+.venv-mjx/
 runs/
 logs/
 *.db

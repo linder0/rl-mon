@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "In-browser viewer for trained MuJoCo RL policies (WASM physics + ONNX policy + three.js).",
+  "description": "[LEGACY - superseded by web-next] In-browser viewer for trained MuJoCo RL policies (WASM physics + ONNX policy + three.js).",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

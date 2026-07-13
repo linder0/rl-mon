@@ -90,18 +90,25 @@ export class MujocoSim {
     return obs;
   }
 
-  /** Apply an action and advance the physics `frame_skip` steps. MuJoCo clamps
-   * ctrl to each actuator's ctrlrange internally, matching gym. */
-  applyAction(action: Float32Array | number[]): void {
+  /** Latch a new action into ctrl. MuJoCo clamps ctrl to each actuator's
+   * ctrlrange internally, matching gym. The control is then held constant for
+   * `frame_skip` substeps (zero-order hold), exactly like gym's do_simulation
+   * — but the caller advances physics one substep at a time (see SimLoop) so
+   * envs with long control periods (Ant: 50 ms) still render smoothly. */
+  setCtrl(action: Float32Array | number[]): void {
     const ctrl = this.data.ctrl as Float64Array;
     for (let i = 0; i < this.meta.nu; i++) ctrl[i] = action[i];
-    for (let f = 0; f < this.meta.frame_skip; f++) {
-      this.mujoco.mj_step(this.model, this.data);
-    }
-    if (this.meta.needs_rne) {
-      // Populate cfrc_ext (contact forces) for the observation, like gym does.
-      this.mujoco.mj_rnePostConstraint(this.model, this.data);
-    }
+  }
+
+  /** Advance the physics by a single model timestep with the latched ctrl. */
+  substep(): void {
+    this.mujoco.mj_step(this.model, this.data);
+  }
+
+  /** Populate cfrc_ext (contact forces) for the observation, like gym does
+   * after its frame_skip'd mj_step. Call before getObs when needs_rne. */
+  computeContactForces(): void {
+    this.mujoco.mj_rnePostConstraint(this.model, this.data);
   }
 
   /** Mirror of gymnasium's `is_healthy` across the locomotion family: requires

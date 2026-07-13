@@ -66,10 +66,16 @@ HYPERPARAMS = dict(
 # short env label (e.g. "ant"). Ant is a higher-DOF 3D body: it does better with
 # longer rollouts and the standard MuJoCo PPO discount/GAE (0.99 / 0.95) than
 # Hopper's high 0.999 / 0.99. CLI flags still override these.
+#
+# NOTE on batch_size: the rollout buffer is n_steps * n_envs. With the default
+# n_envs=8 that is 2048 * 8 = 16384. batch_size must be a sizeable fraction of
+# that, or PPO does hundreds of minibatch updates per rollout and the policy
+# diverges (Ant collapsed to ~0 return with the canonical single-env batch of
+# 64). batch_size=2048 -> 8 minibatches/rollout, which trains stably.
 TUNED_BY_ENV = {
     "ant": dict(
         n_steps=2048,
-        batch_size=64,
+        batch_size=2048,
         gamma=0.99,
         gae_lambda=0.95,
     ),

@@ -29,6 +29,7 @@ export class SimLoop {
 
   private obsBuf: Float32Array;
   private acc = 0;
+  private substepsLeft = 0; // physics substeps remaining in the control period
   private last = performance.now();
   private stepCount = 0;
   private episode = 1;
@@ -67,6 +68,7 @@ export class SimLoop {
     this.sim.reset(true);
     this.stepCount = 0;
     this.acc = 0;
+    this.substepsLeft = 0; // next substep starts with a fresh policy query
   }
 
   start(): void {
@@ -94,21 +96,31 @@ export class SimLoop {
     return { steps: trace.length, maxActionError: maxErr };
   }
 
-  private async controlStep(): Promise<void> {
-    // Capture the agent so a swap mid-inference can't apply a stale action to a
-    // freshly-loaded (different-dimensioned) simulation.
+  /** Start of a control period: build the observation, query the policy, and
+   * latch the resulting ctrl (held for the next frame_skip substeps, exactly
+   * like gym's do_simulation zero-order hold). Returns false if the agent was
+   * swapped out mid-inference. */
+  private async controlBoundary(): Promise<boolean> {
+    // Capture the agent so a swap mid-inference can't apply a stale action to
+    // a freshly-loaded (different-dimensioned) simulation.
     const sim = this.sim;
     const policy = this.policy;
+    if (sim.meta.needs_rne) sim.computeContactForces();
     const obs = sim.getObs(this.obsBuf);
     const action = await policy.act(obs);
-    if (this.sim !== sim || this.policy !== policy) return;
+    if (this.sim !== sim || this.policy !== policy) return false;
 
-    sim.applyAction(action);
+    sim.setCtrl(action);
     this.onControl(obs, action);
-    this.stepCount++;
+    return true;
+  }
 
+  /** End of a control period: episode bookkeeping, matching gym's post-step
+   * health/time-limit checks. */
+  private endOfControlPeriod(): void {
+    this.stepCount++;
     const unhealthy =
-      sim.meta.healthy.terminate_when_unhealthy && !sim.isHealthy();
+      this.sim.meta.healthy.terminate_when_unhealthy && !this.sim.isHealthy();
     if (unhealthy || this.stepCount >= MAX_EPISODE_STEPS) {
       this.episode++;
       this.reset();
@@ -135,15 +147,27 @@ export class SimLoop {
       if (this.playing && !this.stepping) {
         this.stepping = true;
         try {
-          const dt = this.sim.meta.dt;
+          // Advance physics one model timestep at a time so the rendered pose
+          // updates every frame even when the control period is long (Ant's
+          // dt is 50 ms — stepping it whole made motion visibly chunky). The
+          // policy is only queried at control boundaries (every frame_skip
+          // substeps), so the simulated trajectory is identical to gym's.
+          const { timestep, frame_skip } = this.sim.meta;
+          const maxSubsteps = 8 * frame_skip; // same cap as 8 control steps
           this.acc += realDt * this.speed;
           let did = 0;
-          while (this.acc >= dt && did < 8) {
-            await this.controlStep();
-            this.acc -= dt;
+          while (this.acc >= timestep && did < maxSubsteps) {
+            if (this.substepsLeft === 0) {
+              if (!(await this.controlBoundary())) break;
+              this.substepsLeft = frame_skip;
+            }
+            this.sim.substep();
+            this.substepsLeft--;
+            if (this.substepsLeft === 0) this.endOfControlPeriod();
+            this.acc -= timestep;
             did++;
           }
-          if (this.acc > dt * 8) this.acc = 0; // avoid spiral of death
+          if (this.acc > timestep * maxSubsteps) this.acc = 0; // avoid spiral of death
         } finally {
           this.stepping = false;
         }

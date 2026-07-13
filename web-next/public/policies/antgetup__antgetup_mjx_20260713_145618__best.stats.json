@@ -1,0 +1,242 @@
+{
+  "config": {
+    "env_id": "AntGetUp-v5",
+    "command": "train_mjx.py --env AntGetUp-v5 --run-name antgetup_mjx_20260713_145618 --seed 1",
+    "created": "2026-07-13T21:57:07+00:00",
+    "device": "gpu:NVIDIA A100-SXM4-40GB",
+    "hyperparameters": {
+      "num_timesteps": 100000000,
+      "num_envs": 4096,
+      "unroll_length": 5,
+      "batch_size": 2048,
+      "num_minibatches": 32,
+      "num_updates_per_batch": 4,
+      "learning_rate": 0.0003,
+      "lr_schedule": "adaptive_kl",
+      "desired_kl": 0.01,
+      "lr_min": 1e-05,
+      "lr_max": 0.01,
+      "entropy_cost": 0.01,
+      "discounting": 0.97,
+      "gae_lambda": 0.95,
+      "clipping_epsilon": 0.3,
+      "max_grad_norm": 1.0,
+      "vf_coef": 0.5,
+      "reward_scaling": 1.0,
+      "episode_length": 1000,
+      "net_arch": [
+        128,
+        128,
+        128,
+        128
+      ],
+      "value_net_arch": [
+        256,
+        256,
+        256,
+        256,
+        256
+      ],
+      "activation": "swish"
+    },
+    "args": {
+      "env": "AntGetUp-v5",
+      "timesteps": null,
+      "seed": 1,
+      "logdir": "runs",
+      "run_name": "antgetup_mjx_20260713_145618",
+      "num_evals": 20,
+      "num_eval_envs": 128,
+      "no_update_latest": false,
+      "init_from": null,
+      "allow_cpu": false,
+      "num_envs": null,
+      "unroll_length": null,
+      "batch_size": null,
+      "num_minibatches": null,
+      "num_updates_per_batch": null,
+      "learning_rate": null,
+      "lr_schedule": null,
+      "desired_kl": null,
+      "entropy_cost": null,
+      "discounting": null,
+      "gae_lambda": null,
+      "clipping_epsilon": null,
+      "max_grad_norm": null,
+      "reward_scaling": null,
+      "episode_length": null,
+      "net_arch": null,
+      "value_net_arch": null,
+      "activation": null
+    },
+    "task_spec": {
+      "env_class": "AntGetUpMjx",
+      "xml_file": "ant.xml",
+      "frame_skip": 5,
+      "reset_noise_scale": 0.1,
+      "skipped_qpos": 2,
+      "reward": {
+        "forward_reward_weight": 1.0,
+        "ctrl_cost_weight": 0.01,
+        "healthy_reward": 1.0,
+        "contact_cost_weight": 0.0005,
+        "upright_weight": 1.0,
+        "height_weight": 0.5,
+        "stand_bonus": 1.0
+      },
+      "contact_force_range": [
+        -1.0,
+        1.0
+      ],
+      "healthy": {
+        "terminate_when_unhealthy": false,
+        "finite_only": true
+      },
+      "main_body": 1,
+      "task": "recover: right itself to upright/standing from a fallen start",
+      "stand_height": 0.55,
+      "start_height": 0.5
+    },
+    "versions": {
+      "python": "3.12.13",
+      "jax": "0.9.2",
+      "brax": "0.14.2",
+      "mujoco": "3.10.0",
+      "mujoco_mjx": "3.10.0",
+      "gymnasium": "1.3.0",
+      "numpy": "2.5.1"
+    }
+  },
+  "curves": {
+    "train": {
+      "t": [
+        0,
+        5570560,
+        11141120,
+        16711680,
+        22282240,
+        27852800
+      ],
+      "reward": [
+        675.9818115234375,
+        850.5684814453125,
+        861.68408203125,
+        2065.43115234375,
+        2320.57080078125,
+        2330.47216796875
+      ],
+      "ep_len": [
+        1000.0,
+        1000.0,
+        1000.0,
+        1000.0,
+        1000.0,
+        1000.0
+      ]
+    },
+    "eval": {
+      "t": [
+        0,
+        5570560,
+        11141120,
+        16711680,
+        22282240,
+        27852800
+      ],
+      "mean": [
+        675.9818115234375,
+        850.5684814453125,
+        861.68408203125,
+        2065.43115234375,
+        2320.57080078125,
+        2330.47216796875
+      ],
+      "std": [
+        791.0455932617188,
+        900.8136596679688,
+        846.4115600585938,
+        234.95367431640625,
+        132.75685119628906,
+        124.91590118408203
+      ],
+      "ep_len": [
+        1000.0,
+        1000.0,
+        1000.0,
+        1000.0,
+        1000.0,
+        1000.0
+      ]
+    },
+    "diag": {
+      "approx_kl": {
+        "t": [
+          5570560,
+          11141120,
+          16711680,
+          22282240,
+          27852800
+        ],
+        "v": [
+          6477692.5,
+          0.01454490888863802,
+          1532010.75,
+          0.013204701244831085,
+          0.012463285587728024
+        ]
+      },
+      "explained_variance": {
+        "t": [],
+        "v": []
+      },
+      "entropy": {
+        "t": [
+          5570560,
+          11141120,
+          16711680,
+          22282240,
+          27852800
+        ],
+        "v": [
+          0.04647544026374817,
+          0.04659518226981163,
+          0.03782686963677406,
+          0.029697032645344734,
+          0.02621464803814888
+        ]
+      },
+      "action_std": {
+        "t": [],
+        "v": []
+      },
+      "clip_fraction": {
+        "t": [],
+        "v": []
+      },
+      "value_loss": {
+        "t": [
+          5570560,
+          11141120,
+          16711680,
+          22282240,
+          27852800
+        ],
+        "v": [
+          480083.59375,
+          0.4560849964618683,
+          8714.6962890625,
+          3.4896769523620605,
+          1.169970154762268
+        ]
+      }
+    }
+  },
+  "summary": {
+    "timesteps": 27852800,
+    "train_ep_rew_final": 2330.5,
+    "final_eval_mean": 2330.5,
+    "best_eval_mean": 2330.5,
+    "eval_ep_len_final": 1000.0,
+    "seed": 1
+  }
+}

@@ -41,6 +41,47 @@ python train.py --env Walker2d-v5 --learning-rate 1e-3 --n-steps 2048 \
     --net-arch 400,300
 ```
 
+## Train on GPU (MJX + Brax, e.g. on Lambda)
+
+The GPU path trains the *same* tasks with MJX (MuJoCo compiled via JAX/XLA)
+and Brax PPO, running thousands of parallel environments on one GPU —
+minutes instead of hours. The envs are faithful ports of the gymnasium `-v5`
+tasks (`mjx_envs/`), so runs land in `runs/` with the same layout and export
+to the web viewer unchanged. SB3 (`train.py`) remains the CPU/laptop path.
+
+Renting the GPU is scripted end-to-end — see [`LAMBDA.md`](LAMBDA.md) for the
+launch → setup → train → sync → terminate flow (`scripts/lambda.sh`).
+
+On a GPU box (any single modern NVIDIA card; the driver is all you need):
+
+```bash
+pip install -r requirements-mjx.txt
+python -c "import jax; print(jax.devices())"     # must show a CUDA device
+
+python train_mjx.py --env Walker2d-v5            # 50M steps, ~minutes on GPU
+python train_mjx.py --env Ant-v5                 # 100M steps, 4096 envs
+python train_mjx.py --env Ant-v5 --num-envs 8192 # more envs = the Ant lever
+```
+
+Notes:
+
+- `train_mjx.py` **refuses to run on CPU** (a broken CUDA install would
+  silently train ~1000x slower); `--allow-cpu` overrides for smoke tests.
+- The learning rate is **KL-adaptive by default** (Brax's `ADAPTIVE_KL`
+  schedule holds a target KL of 0.01) — no decay schedule to tune.
+  `--lr-schedule none` gives a constant LR.
+- Hyperparameters are Brax-native (`--num-envs`, `--unroll-length`,
+  `--batch-size`, `--num-minibatches`, ...), *not* translations of the SB3
+  values; tuned per-env defaults live in `train_mjx.py`. The Optuna/Zoo
+  tuning workflow below applies to the SB3 path only.
+- The first training step JIT-compiles the whole sim+learn loop (a minute or
+  two of silence is normal).
+- Validate the env ports against gymnasium anytime with
+  `python -m mjx_envs.validate`.
+- Exported MJX policies get an automatic **transfer check** (rolled in
+  C-MuJoCo, reporting survival steps + forward distance) since MJX and
+  C-MuJoCo physics can diverge — watch that line for Ant especially.
+
 ## Watch it
 
 ```bash
@@ -48,6 +89,8 @@ python enjoy.py                     # latest Hopper run in a live viewer
 python enjoy.py --env Walker2d-v5   # latest run of another env
 python enjoy.py --best              # load the best checkpoint by eval reward
 ```
+
+Works for both SB3 and Brax runs (auto-detected from the run's `config.json`).
 
 ## Watch it in the browser
 
@@ -58,13 +101,17 @@ web app:
 
 ```bash
 python export_onnx.py --all-envs           # export every run (final + best)
-cd web && npm install && npm run dev       # http://localhost:5173
+cd web-next && npm install && npm run dev  # http://localhost:3000
 ```
 
 It's an all-in-one testing dashboard: a grouped Run picker (every run/seed and
 its final/best variant), the live 3D rollout, and a per-run stats panel with
 summary cards, eval/training reward curves, and the run's hyperparameters. See
-[`web/README.md`](web/README.md) for details.
+[`web-next/README.md`](web-next/README.md) for details.
+
+`web-next/` (Next.js + React) is the primary viewer. The original Vite app in
+`web/` is legacy — kept for reference, no longer actively developed; see
+[`web/README.md`](web/README.md).
 
 ## Tune hyperparameters (RL Baselines3 Zoo + Optuna)
 
@@ -131,11 +178,23 @@ runs/
       vecnormalize.pkl           # obs/reward normalization stats (needed to reload)
 ```
 
+Brax runs use the same folders with `final_brax.pkl` / `best_brax.pkl`
+(pure-numpy param pickles, normalization included) instead of the SB3
+`*.zip` + `vecnormalize.pkl` pair, and add `"trainer": "brax"` to
+`config.json`. Both kinds sit side by side under `runs/<env>/` and show up
+together in the web viewer.
+
 ## Files
 
 - `train.py` — training entry point (vectorized envs, `VecNormalize`, tuned PPO,
   checkpoints, eval curve, TensorBoard videos, per-run documentation). Accepts
   hyperparameter overrides via CLI flags.
+- `train_mjx.py` — GPU training entry point (Brax PPO on MJX physics,
+  KL-adaptive learning rate, GPU pre-flight check). Same run-folder contract.
+- `mjx_envs/` — faithful MJX ports of the gymnasium `-v5` envs
+  (`locomotion.py`) plus the construction-parity gate (`validate.py`).
+- `requirements-mjx.txt` — the GPU stack (JAX/CUDA, Brax, MJX), separate from
+  the CPU install.
 - `hyperparams/ppo.yml` — RL Baselines3 Zoo config for validation/final runs
   (full budget), mirroring `train.py`.
 - `hyperparams/ppo_tune.yml` — Zoo config for the Optuna search phase (short

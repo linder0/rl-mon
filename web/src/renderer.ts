@@ -22,6 +22,9 @@ export class Renderer {
   private readonly root: THREE.Group;
   private bodies: THREE.Group[] = [];
   private torsoIndex = 1;
+  private ground!: THREE.Mesh;
+  private grid!: THREE.GridHelper;
+  private keyLight!: THREE.DirectionalLight;
 
   follow = true;
   private readonly camOffset = new THREE.Vector3();
@@ -81,6 +84,8 @@ export class Renderer {
     key.shadow.bias = -0.0002;
     key.shadow.normalBias = 0.02;
     this.scene.add(key);
+    this.scene.add(key.target);
+    this.keyLight = key;
 
     const rim = new THREE.DirectionalLight(0x88aaff, 0.7);
     rim.position.set(-6, 4, -4);
@@ -94,12 +99,27 @@ export class Renderer {
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     this.scene.add(ground);
+    this.ground = ground;
 
     const grid = new THREE.GridHelper(200, 200, 0x2a3346, 0x1a2130);
     (grid.material as THREE.Material).transparent = true;
     (grid.material as THREE.Material).opacity = 0.5;
     grid.position.y = 0.001;
     this.scene.add(grid);
+    this.grid = grid;
+  }
+
+  /** Keep the (finite) floor, grid, and shadow-casting light centered under
+   * the agent. MuJoCo's plane is infinite, but our meshes aren't — a good Ant
+   * covers hundreds of meters and would walk straight off them. Positions
+   * snap to the 1 m grid cells so the pattern never appears to slide. */
+  private recenterWorld(tx: number, tz: number): void {
+    const sx = Math.round(tx);
+    const sz = Math.round(tz);
+    this.ground.position.set(sx, 0, sz);
+    this.grid.position.set(sx, 0.001, sz);
+    this.keyLight.target.position.set(tx, 0, tz);
+    this.keyLight.position.set(tx + 4, 8, tz + 5);
   }
 
   /** Rebuild the visible robot from a model's geoms. */
@@ -186,18 +206,21 @@ export class Renderer {
       );
     }
 
-    if (this.follow) {
-      // Track the agent's ABSOLUTE ground position each frame (not accumulated
-      // deltas) so the camera always re-centers after a reset/model switch, and
-      // preserve the user's orbit offset. MuJoCo is Z-up under a root rotated to
-      // three.js Y-up, so world (mx,my,mz) -> three (mx, mz, -my): the ground
-      // plane is three (x, z) = (mx, -my). Tracking both handles Ant, which
-      // roams in 2D (Hopper/Walker only move in x).
-      const mx = xpos[this.torsoIndex * 3 + 0];
-      const my = xpos[this.torsoIndex * 3 + 1];
-      if (Number.isFinite(mx) && Number.isFinite(my)) {
-        const tx = mx;
-        const tz = -my;
+    // Track the agent's ABSOLUTE ground position each frame (not accumulated
+    // deltas) so the camera always re-centers after a reset/model switch, and
+    // preserve the user's orbit offset. MuJoCo is Z-up under a root rotated to
+    // three.js Y-up, so world (mx,my,mz) -> three (mx, mz, -my): the ground
+    // plane is three (x, z) = (mx, -my). Tracking both handles Ant, which
+    // roams in 2D (Hopper/Walker only move in x).
+    const mx = xpos[this.torsoIndex * 3 + 0];
+    const my = xpos[this.torsoIndex * 3 + 1];
+    if (Number.isFinite(mx) && Number.isFinite(my)) {
+      const tx = mx;
+      const tz = -my;
+      // The world (floor/grid/shadows) follows even when the camera doesn't,
+      // so an agent that roams far never walks off the rendered floor.
+      this.recenterWorld(tx, tz);
+      if (this.follow) {
         this.camOffset.copy(this.camera.position).sub(this.controls.target);
         const ex = tx - this.controls.target.x;
         const ez = tz - this.controls.target.z;

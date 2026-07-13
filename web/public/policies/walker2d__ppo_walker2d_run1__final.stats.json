@@ -33,6 +33,7 @@
       "eval_episodes": 5,
       "video_freq": 50000
     },
+    "task_spec": null,
     "versions": {
       "python": "3.12.12",
       "stable_baselines3": "2.9.0",
