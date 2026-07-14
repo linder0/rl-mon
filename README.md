@@ -109,9 +109,8 @@ its final/best variant), the live 3D rollout, and a per-run stats panel with
 summary cards, eval/training reward curves, and the run's hyperparameters. See
 [`web-next/README.md`](web-next/README.md) for details.
 
-`web-next/` (Next.js + React) is the primary viewer. The original Vite app in
-`web/` is legacy — kept for reference, no longer actively developed; see
-[`web/README.md`](web/README.md).
+`web-next/` (Next.js + React) is the viewer. (The original Vite prototype in
+`web/` was retired; it lives in git history if ever needed.)
 
 ## Tune hyperparameters (RL Baselines3 Zoo + Optuna)
 

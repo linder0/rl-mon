@@ -166,6 +166,11 @@ export class SimLoop {
     this.sim.knockOver();
   }
 
+  /** Adjust the foraging spawn distance live (AntFood tasks; no-op otherwise). */
+  setFoodSpawnMax(max: number | null): void {
+    this.sim.setFoodSpawnMax(max);
+  }
+
   /** End of a control period: episode bookkeeping, matching gym's post-step
    * health/time-limit checks. */
   private endOfControlPeriod(): void {

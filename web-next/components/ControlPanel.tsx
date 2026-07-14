@@ -1,13 +1,23 @@
 "use client";
 
-import { GraduationCap, LifeBuoy, Moon, Pause, Play, RotateCcw, Sun, Zap } from "lucide-react";
+import Link from "next/link";
+import {
+  ChevronRight,
+  GraduationCap,
+  LifeBuoy,
+  Moon,
+  Pause,
+  Play,
+  RotateCcw,
+  Sun,
+  Zap,
+} from "lucide-react";
 import { Panel } from "@/components/ui/panel";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import type { LearningState } from "@/lib/viewerApp";
 import {
   Select,
   SelectContent,
@@ -15,14 +25,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { LearningState, TaskInfo } from "@/lib/viewerApp";
+import { fmtSteps } from "@/lib/format";
 import type { LoopStats, ParityResult } from "@/lib/loop";
 import type { Backend } from "@/components/scene/webgpuRenderer";
-import type { EnvGroup } from "@/lib/types";
 
 interface ControlPanelProps {
-  envs: EnvGroup[];
-  currentEnv: string;
-  onSelectEnv: (id: string) => void;
+  /** Project (env label) this viewer is scoped to. */
+  label: string;
+  /** This project's iterations (run names, best-first) and the loaded one. */
+  runNames: string[];
+  currentRun: string;
+  onSelectRun: (name: string) => void;
   playing: boolean;
   onTogglePlay: () => void;
   onReset: () => void;
@@ -44,12 +58,11 @@ interface ControlPanelProps {
   recoveryOn: boolean;
   onToggleRecovery: (on: boolean) => void;
   onKnockOver: () => void;
-}
-
-function formatStep(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 ? 1 : 0)}M`;
-  if (n >= 1_000) return `${Math.round(n / 1_000)}k`;
-  return String(n);
+  /** Env-specific task capabilities (null until the run is loaded). */
+  task: TaskInfo | null;
+  /** Current food spawn distance (meters) shown on the task slider. */
+  foodMax: number;
+  onFoodMax: (v: number) => void;
 }
 
 function Stat({ label, children }: { label: string; children: React.ReactNode }) {
@@ -72,12 +85,18 @@ export function ControlPanel(props: ControlPanelProps) {
     <Panel size="sm">
       <div className="flex flex-col gap-3 p-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-sm font-semibold tracking-tight">RL MuJoCo</span>
-            <span className="text-micro font-medium uppercase tracking-widest text-muted-foreground">
-              viewer
-            </span>
-          </div>
+          <nav className="flex min-w-0 items-center gap-1 text-label">
+            <Link href="/" className="shrink-0 text-muted-foreground hover:text-primary">
+              Projects
+            </Link>
+            <ChevronRight className="size-3 shrink-0 text-muted-foreground" />
+            <Link
+              href={`/p/${props.label}`}
+              className="truncate font-medium hover:text-primary"
+            >
+              {props.label}
+            </Link>
+          </nav>
           <Button
             variant="ghost"
             size="icon"
@@ -91,15 +110,15 @@ export function ControlPanel(props: ControlPanelProps) {
         </div>
 
         <div className="space-y-1">
-          <Label className="text-label text-muted-foreground">Environment</Label>
-          <Select value={props.currentEnv} onValueChange={(v) => props.onSelectEnv(String(v))}>
+          <Label className="text-label text-muted-foreground">Iteration</Label>
+          <Select value={props.currentRun} onValueChange={(v) => props.onSelectRun(String(v))}>
             <SelectTrigger className="h-8 w-full text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {props.envs.map((e) => (
-                <SelectItem key={e.env_id} value={e.env_id}>
-                  {e.env_id}
+              {props.runNames.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -164,6 +183,46 @@ export function ControlPanel(props: ControlPanelProps) {
           <Stat label="Renderer">{backend ? backend.toUpperCase() : "—"}</Stat>
         </div>
 
+        {/* Get-up task: the whole point is recovering from a fall, so offer the
+            shove any time (no combined mode needed). */}
+        {props.task?.getup && (
+          <>
+            <Separator />
+            <Button size="sm" variant="secondary" className="h-8" onClick={props.onKnockOver}>
+              <Zap className="size-3.5" />
+              Knock over
+            </Button>
+            <p className="text-micro leading-tight text-muted-foreground">
+              task: right itself after a fall
+            </p>
+          </>
+        )}
+
+        {/* Foraging task: probe generalization by spawning food outside the
+            trained range. */}
+        {props.task?.food && (
+          <>
+            <Separator />
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-label">
+                <span className="text-muted-foreground">Food distance</span>
+                <span className="font-medium tabular-nums">{props.foodMax.toFixed(1)} m</span>
+              </div>
+              <Slider
+                value={[props.foodMax]}
+                min={1}
+                max={20}
+                step={0.5}
+                onValueChange={(v) => props.onFoodMax(Array.isArray(v) ? v[0] : (v as number))}
+              />
+              <p className="text-micro leading-tight text-muted-foreground">
+                trained on {props.task.food.spawnMin.toFixed(0)}–
+                {props.task.food.spawnMax.toFixed(0)} m spawns
+              </p>
+            </div>
+          </>
+        )}
+
         {props.recoveryAvailable && (
           <>
             <Separator />
@@ -220,7 +279,7 @@ export function ControlPanel(props: ControlPanelProps) {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-label">
                   <span className="text-muted-foreground">
-                    {frame ? `${formatStep(frame.step)} steps` : "—"}
+                    {frame ? `${fmtSteps(frame.step)} steps` : "—"}
                   </span>
                   <span className="font-medium tabular-nums">
                     {frame?.reward != null ? `reward ${Math.round(frame.reward)}` : ""}

@@ -7,6 +7,7 @@ import type { LoopStats } from "@/lib/loop";
 import type { RunAgg } from "@/lib/types";
 import type { Variant } from "@/lib/viewerApp";
 import { PanelViewToggle, type PanelView } from "@/components/PanelViewToggle";
+import { fmt } from "@/lib/format";
 
 const EP_MAX = 1000; // gym TimeLimit for these tasks
 const FPS_MAX = 120;
@@ -192,28 +193,8 @@ function DialsPanelImpl(props: DialsPanelProps) {
 
           {summary && (
             <div className="grid grid-cols-2 gap-2">
-              <BigReadout
-                label="best eval"
-                value={
-                  summary.run.summary.best_eval_mean === null ||
-                  summary.run.summary.best_eval_mean === undefined
-                    ? "—"
-                    : summary.run.summary.best_eval_mean.toLocaleString(undefined, {
-                        maximumFractionDigits: 0,
-                      })
-                }
-              />
-              <BigReadout
-                label="final eval"
-                value={
-                  summary.run.summary.final_eval_mean === null ||
-                  summary.run.summary.final_eval_mean === undefined
-                    ? "—"
-                    : summary.run.summary.final_eval_mean.toLocaleString(undefined, {
-                        maximumFractionDigits: 0,
-                      })
-                }
-              />
+              <BigReadout label="best eval" value={fmt(summary.run.summary.best_eval_mean)} />
+              <BigReadout label="final eval" value={fmt(summary.run.summary.final_eval_mean)} />
             </div>
           )}
         </div>

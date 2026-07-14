@@ -1,5 +1,4 @@
-"""Export trained PPO policies to browser assets for the web-next/ viewer
-(and the legacy web/ viewer).
+"""Export trained PPO policies to browser assets for the web-next/ viewer.
 
 Turns runs under runs/<env>/ into everything the in-browser dashboard needs:
 
@@ -59,9 +58,9 @@ def parse_args():
     p.add_argument("--variant", choices=["final", "best", "both"], default="both",
                    help="which saved model(s) to export (default: both if present)")
     p.add_argument("--out", type=str, nargs="+",
-                   default=[DEFAULT_OUT, "web/public"],
-                   help="output root(s); default writes to both web-next/public and "
-                        "the legacy web/public (exported once, then mirrored)")
+                   default=[DEFAULT_OUT],
+                   help="output root(s); default writes to web-next/public "
+                        "(pass several to mirror the export)")
     p.add_argument("--parity-steps", type=int, default=64,
                    help="deterministic steps recorded for the JS parity check")
     p.add_argument("--timeline-frames", type=int, default=24,

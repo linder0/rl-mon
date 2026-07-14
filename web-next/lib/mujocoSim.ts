@@ -89,11 +89,25 @@ export class MujocoSim {
     return [xpos[b * 3 + 0], xpos[b * 3 + 1]];
   }
 
+  /** Viewer override of the spawn annulus' outer radius (meters); null keeps
+   * the trained spawn_max. Lets the UI probe generalization to farther food. */
+  private foodSpawnMax: number | null = null;
+
+  /** Set (or clear) the spawn-distance override and respawn the food so the
+   * change is immediately visible. */
+  setFoodSpawnMax(max: number | null): void {
+    if (!this.meta.food) return;
+    this.foodSpawnMax = max;
+    this.spawnFood();
+  }
+
   /** Spawn the food on an annulus around the torso, mirroring AntFoodMjx. */
   private spawnFood(): void {
     const f = this.meta.food!;
     const [cx, cy] = this.torsoXY();
-    const r = f.spawn_min + Math.random() * (f.spawn_max - f.spawn_min);
+    const max = this.foodSpawnMax ?? f.spawn_max;
+    const min = Math.min(f.spawn_min, max);
+    const r = min + Math.random() * (max - min);
     const theta = Math.random() * 2 * Math.PI;
     this.foodX = cx + r * Math.cos(theta);
     this.foodY = cy + r * Math.sin(theta);

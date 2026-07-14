@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
-import type { Series } from "@/lib/chartTypes";
+import type { Series } from "@/lib/chartDefs";
 
 function si(v: number): string {
   const a = Math.abs(v);

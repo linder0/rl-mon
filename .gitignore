@@ -9,7 +9,6 @@ __pycache__/
 
 # Node / web build
 node_modules/
-web/dist/
 dist/
 
 # OS

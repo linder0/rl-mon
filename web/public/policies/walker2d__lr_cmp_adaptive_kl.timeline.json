@@ -1,1 +1,0 @@
-{"id":"walker2d__lr_cmp_adaptive_kl","frames":[{"step":0,"reward":-7.4,"ep_len":29.3,"onnx":"policies/walker2d__lr_cmp_adaptive_kl__t0.onnx"},{"step":20480,"reward":234.5,"ep_len":260.1,"onnx":"policies/walker2d__lr_cmp_adaptive_kl__t20480.onnx"},{"step":40960,"reward":330.7,"ep_len":253.2,"onnx":"policies/walker2d__lr_cmp_adaptive_kl__t40960.onnx"}]}

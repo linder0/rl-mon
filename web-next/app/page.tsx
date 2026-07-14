@@ -1,5 +1,5 @@
-import { ClientApp } from "@/components/ClientApp";
+import { ProjectsIndex } from "@/components/projects/ProjectsIndex";
 
 export default function Home() {
-  return <ClientApp />;
+  return <ProjectsIndex />;
 }

@@ -5,9 +5,6 @@ compiled to WebAssembly, the policy exported to ONNX, rendered with three.js
 (WebGPU, with automatic WebGL fallback). No server logic at runtime — all
 simulation and inference happen client-side.
 
-This is the **primary viewer**. The original Vite app in [`../web`](../web) is
-legacy.
-
 ```
 ┌──────────────── browser (per frame) ─────────────────┐
 │  MuJoCo WASM ──qpos,qvel──▶ build obs ──▶ ONNX policy │
@@ -20,9 +17,8 @@ legacy.
 ## 1. Export trained policies (from the repo root)
 
 This reads runs under `runs/<env>/` and writes browser assets into
-`web-next/public/` (and mirrors them to the legacy `web/public/`). Every run is
-exported individually (final + best), so you can compare seeds/configs side by
-side:
+`web-next/public/`. Every run is exported individually (final + best), so you
+can compare seeds/configs side by side:
 
 ```bash
 # from the repo root, with the project venv active
@@ -41,7 +37,7 @@ Each exported run+variant produces (id = `<env>__<run_name>__<final|best>`):
 - `public/policies/<id>.stats.json` — config/hyperparameters, training curve
   (from `progress.csv`), and eval curve (from `evaluations.npz`) for the dashboard.
 - `public/models/<model>.xml` — the MuJoCo model (physics + geometry).
-- `public/policies/index.json` — the grouped catalog the app's Run picker reads.
+- `public/policies/index.json` — the grouped catalog the app reads.
 
 ## 2. Run the viewer
 
@@ -51,15 +47,21 @@ npm install
 npm run dev        # http://localhost:3000
 ```
 
-Controls: play/pause (Space), reset (R), speed slider, follow-camera toggle, and
-a grouped Run picker (by environment) to switch between every exported run and
-its final/best variant — with run comparison overlays on the charts. The stats
-panel shows summary cards (best/final eval reward, episode length, timesteps,
-seed), the eval-reward curve (mean ± std) and training-reward curve (rendered
-with uPlot), the run's config/hyperparameters, and a live `parity` line
-confirming the in-browser policy matches the Python reference. A collapsible
-"Policy network" panel visualizes live actor/critic activations every control
-step.
+The site is organized as **projects → iterations**:
+
+- `/` — one project card per environment (iteration count, best eval).
+- `/p/<env>` — opening a project drops straight into the live 3D viewer on its
+  best iteration; an **Iteration dropdown** in the control panel switches
+  between the project's training runs without reloading the scene.
+  `/p/<env>/<run>` deep-links to a specific iteration (the dropdown keeps the
+  URL in sync).
+- Controls: play/pause (Space), reset (R), speed slider, follow-camera toggle,
+  best/final checkpoint switch, and (where exported) the learning-mode
+  checkpoint scrubber. The stats panel shows summary cards, outcome charts
+  overlaying **all** iterations (one color per run), the selected run's
+  training diagnostics and config; a live `parity` line confirms the
+  in-browser policy matches the Python reference. A collapsible "Policy
+  network" panel visualizes live actor/critic activations every control step.
 
 ## 3. Validate headlessly (optional)
 
@@ -73,11 +75,19 @@ npm run validate -- hopper
 
 ## How it works
 
-- `app/` — the Next.js App Router shell. The whole viewer is loaded via
-  `next/dynamic` with `ssr: false` (`components/ClientApp.tsx`) since it touches
-  WebGPU, WASM, and `window` on load.
-- `lib/viewerApp.ts` — the framework-agnostic core that owns the sim, policy,
-  renderer, and loop, and reports state back to React through callbacks.
+- `app/` — the Next.js App Router: `/` (projects index) and `/p/[env]` (the
+  viewer, with `/p/[env]/[run]` deep links). Only the viewer touches
+  WebGPU/WASM, so only it is loaded via `next/dynamic` with `ssr: false`
+  (`components/iteration/IterationClient.tsx`); the index stays light.
+- `lib/catalog.ts` + `lib/hooks.ts` — the data layer: loads/caches
+  `policies/index.json` and per-run stats, and derives the project/iteration
+  hierarchy (project = environment, iteration = training run).
+- `lib/chartDefs.ts` + `components/charts/ChartGrid.tsx` — the metric registry
+  and batched chart surface. Defs map metrics onto StatsData; unknown exported
+  diagnostics are auto-discovered, so new metrics chart themselves. One run =
+  single mode (eval band), many runs = overlay mode (run colors).
+- `lib/viewerApp.ts` — the sim controller for one iteration: owns the sim,
+  policy, renderer, and loop, and reports live state to React via callbacks.
 - `lib/mujocoSim.ts` — loads the WASM module, mounts the MJCF, and steps the
   simulation exactly like Gymnasium (same observation, `frame_skip`, and health
   checks, read from the exported metadata).
