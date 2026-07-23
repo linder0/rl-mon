@@ -1,0 +1,159 @@
+{
+  "format": "monster-spec-v1",
+  "name": "hexapod",
+  "limbs": [
+    {
+      "yaw_deg": 30.0,
+      "lengths": [
+        0.22,
+        0.38
+      ],
+      "pitches_deg": [
+        10.0,
+        50.0
+      ],
+      "mount_length": 0.18,
+      "mount_pitch_deg": 0.0,
+      "radius": 0.06,
+      "swing_range_deg": [
+        -35.0,
+        35.0
+      ],
+      "lift_range_deg": [
+        -45.0,
+        45.0
+      ],
+      "gear": 120.0,
+      "name": "leg1"
+    },
+    {
+      "yaw_deg": 90.0,
+      "lengths": [
+        0.22,
+        0.38
+      ],
+      "pitches_deg": [
+        10.0,
+        50.0
+      ],
+      "mount_length": 0.18,
+      "mount_pitch_deg": 0.0,
+      "radius": 0.06,
+      "swing_range_deg": [
+        -35.0,
+        35.0
+      ],
+      "lift_range_deg": [
+        -45.0,
+        45.0
+      ],
+      "gear": 120.0,
+      "name": "leg2"
+    },
+    {
+      "yaw_deg": 150.0,
+      "lengths": [
+        0.22,
+        0.38
+      ],
+      "pitches_deg": [
+        10.0,
+        50.0
+      ],
+      "mount_length": 0.18,
+      "mount_pitch_deg": 0.0,
+      "radius": 0.06,
+      "swing_range_deg": [
+        -35.0,
+        35.0
+      ],
+      "lift_range_deg": [
+        -45.0,
+        45.0
+      ],
+      "gear": 120.0,
+      "name": "leg3"
+    },
+    {
+      "yaw_deg": 210.0,
+      "lengths": [
+        0.22,
+        0.38
+      ],
+      "pitches_deg": [
+        10.0,
+        50.0
+      ],
+      "mount_length": 0.18,
+      "mount_pitch_deg": 0.0,
+      "radius": 0.06,
+      "swing_range_deg": [
+        -35.0,
+        35.0
+      ],
+      "lift_range_deg": [
+        -45.0,
+        45.0
+      ],
+      "gear": 120.0,
+      "name": "leg4"
+    },
+    {
+      "yaw_deg": 270.0,
+      "lengths": [
+        0.22,
+        0.38
+      ],
+      "pitches_deg": [
+        10.0,
+        50.0
+      ],
+      "mount_length": 0.18,
+      "mount_pitch_deg": 0.0,
+      "radius": 0.06,
+      "swing_range_deg": [
+        -35.0,
+        35.0
+      ],
+      "lift_range_deg": [
+        -45.0,
+        45.0
+      ],
+      "gear": 120.0,
+      "name": "leg5"
+    },
+    {
+      "yaw_deg": 330.0,
+      "lengths": [
+        0.22,
+        0.38
+      ],
+      "pitches_deg": [
+        10.0,
+        50.0
+      ],
+      "mount_length": 0.18,
+      "mount_pitch_deg": 0.0,
+      "radius": 0.06,
+      "swing_range_deg": [
+        -35.0,
+        35.0
+      ],
+      "lift_range_deg": [
+        -45.0,
+        45.0
+      ],
+      "gear": 120.0,
+      "name": "leg6"
+    }
+  ],
+  "torso_radius": 0.18,
+  "torso_length": 0.5,
+  "rgba": [
+    0.45,
+    0.7,
+    0.4,
+    1.0
+  ],
+  "healthy_z_range": null
+}

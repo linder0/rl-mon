@@ -1,0 +1,87 @@
+{
+  "format": "monster-spec-v1",
+  "name": "biped_tail",
+  "limbs": [
+    {
+      "yaw_deg": 90.0,
+      "lengths": [
+        0.35,
+        0.35
+      ],
+      "pitches_deg": [
+        55.0,
+        80.0
+      ],
+      "mount_length": 0.12,
+      "mount_pitch_deg": 0.0,
+      "radius": 0.07,
+      "swing_range_deg": [
+        -25.0,
+        25.0
+      ],
+      "lift_range_deg": [
+        -50.0,
+        50.0
+      ],
+      "gear": 180.0,
+      "name": "leg_l"
+    },
+    {
+      "yaw_deg": -90.0,
+      "lengths": [
+        0.35,
+        0.35
+      ],
+      "pitches_deg": [
+        55.0,
+        80.0
+      ],
+      "mount_length": 0.12,
+      "mount_pitch_deg": 0.0,
+      "radius": 0.07,
+      "swing_range_deg": [
+        -25.0,
+        25.0
+      ],
+      "lift_range_deg": [
+        -50.0,
+        50.0
+      ],
+      "gear": 180.0,
+      "name": "leg_r"
+    },
+    {
+      "yaw_deg": 180.0,
+      "lengths": [
+        0.35,
+        0.3
+      ],
+      "pitches_deg": [
+        -25.0,
+        -10.0
+      ],
+      "mount_length": 0.15,
+      "mount_pitch_deg": 0.0,
+      "radius": 0.05,
+      "swing_range_deg": [
+        -40.0,
+        40.0
+      ],
+      "lift_range_deg": [
+        -40.0,
+        40.0
+      ],
+      "gear": 80.0,
+      "name": "tail"
+    }
+  ],
+  "torso_radius": 0.2,
+  "torso_length": 0.0,
+  "rgba": [
+    0.75,
+    0.45,
+    0.65,
+    1.0
+  ],
+  "healthy_z_range": null
+}

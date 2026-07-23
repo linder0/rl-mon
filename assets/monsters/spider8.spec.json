@@ -1,0 +1,207 @@
+{
+  "format": "monster-spec-v1",
+  "name": "spider8",
+  "limbs": [
+    {
+      "yaw_deg": 22.5,
+      "lengths": [
+        0.3,
+        0.45
+      ],
+      "pitches_deg": [
+        -25.0,
+        60.0
+      ],
+      "mount_length": 0.2,
+      "mount_pitch_deg": 0.0,
+      "radius": 0.05,
+      "swing_range_deg": [
+        -35.0,
+        35.0
+      ],
+      "lift_range_deg": [
+        -45.0,
+        45.0
+      ],
+      "gear": 100.0,
+      "name": "leg1"
+    },
+    {
+      "yaw_deg": 67.5,
+      "lengths": [
+        0.3,
+        0.45
+      ],
+      "pitches_deg": [
+        -25.0,
+        60.0
+      ],
+      "mount_length": 0.2,
+      "mount_pitch_deg": 0.0,
+      "radius": 0.05,
+      "swing_range_deg": [
+        -35.0,
+        35.0
+      ],
+      "lift_range_deg": [
+        -45.0,
+        45.0
+      ],
+      "gear": 100.0,
+      "name": "leg2"
+    },
+    {
+      "yaw_deg": 112.5,
+      "lengths": [
+        0.3,
+        0.45
+      ],
+      "pitches_deg": [
+        -25.0,
+        60.0
+      ],
+      "mount_length": 0.2,
+      "mount_pitch_deg": 0.0,
+      "radius": 0.05,
+      "swing_range_deg": [
+        -35.0,
+        35.0
+      ],
+      "lift_range_deg": [
+        -45.0,
+        45.0
+      ],
+      "gear": 100.0,
+      "name": "leg3"
+    },
+    {
+      "yaw_deg": 157.5,
+      "lengths": [
+        0.3,
+        0.45
+      ],
+      "pitches_deg": [
+        -25.0,
+        60.0
+      ],
+      "mount_length": 0.2,
+      "mount_pitch_deg": 0.0,
+      "radius": 0.05,
+      "swing_range_deg": [
+        -35.0,
+        35.0
+      ],
+      "lift_range_deg": [
+        -45.0,
+        45.0
+      ],
+      "gear": 100.0,
+      "name": "leg4"
+    },
+    {
+      "yaw_deg": 202.5,
+      "lengths": [
+        0.3,
+        0.45
+      ],
+      "pitches_deg": [
+        -25.0,
+        60.0
+      ],
+      "mount_length": 0.2,
+      "mount_pitch_deg": 0.0,
+      "radius": 0.05,
+      "swing_range_deg": [
+        -35.0,
+        35.0
+      ],
+      "lift_range_deg": [
+        -45.0,
+        45.0
+      ],
+      "gear": 100.0,
+      "name": "leg5"
+    },
+    {
+      "yaw_deg": 247.5,
+      "lengths": [
+        0.3,
+        0.45
+      ],
+      "pitches_deg": [
+        -25.0,
+        60.0
+      ],
+      "mount_length": 0.2,
+      "mount_pitch_deg": 0.0,
+      "radius": 0.05,
+      "swing_range_deg": [
+        -35.0,
+        35.0
+      ],
+      "lift_range_deg": [
+        -45.0,
+        45.0
+      ],
+      "gear": 100.0,
+      "name": "leg6"
+    },
+    {
+      "yaw_deg": 292.5,
+      "lengths": [
+        0.3,
+        0.45
+      ],
+      "pitches_deg": [
+        -25.0,
+        60.0
+      ],
+      "mount_length": 0.2,
+      "mount_pitch_deg": 0.0,
+      "radius": 0.05,
+      "swing_range_deg": [
+        -35.0,
+        35.0
+      ],
+      "lift_range_deg": [
+        -45.0,
+        45.0
+      ],
+      "gear": 100.0,
+      "name": "leg7"
+    },
+    {
+      "yaw_deg": 337.5,
+      "lengths": [
+        0.3,
+        0.45
+      ],
+      "pitches_deg": [
+        -25.0,
+        60.0
+      ],
+      "mount_length": 0.2,
+      "mount_pitch_deg": 0.0,
+      "radius": 0.05,
+      "swing_range_deg": [
+        -35.0,
+        35.0
+      ],
+      "lift_range_deg": [
+        -45.0,
+        45.0
+      ],
+      "gear": 100.0,
+      "name": "leg8"
+    }
+  ],
+  "torso_radius": 0.22,
+  "torso_length": 0.0,
+  "rgba": [
+    0.3,
+    0.3,
+    0.35,
+    1.0
+  ],
+  "healthy_z_range": null
+}

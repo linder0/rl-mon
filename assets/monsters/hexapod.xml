@@ -1,0 +1,107 @@
+<mujoco model="hexapod">
+  <compiler angle="radian"/>
+
+  <option timestep="0.01" integrator="RK4"/>
+
+  <default>
+    <joint limited="true" armature="1" damping="1"/>
+    <geom conaffinity="0" friction="1 0.5 0.5" margin="0.01" density="5" rgba="0.45 0.7 0.4 1"/>
+  </default>
+
+  <asset>
+    <texture type="skybox" colorspace="auto" name="sky" builtin="gradient" rgb1="1 1 1" rgb2="0 0 0" width="100" height="600"/>
+    <texture type="2d" colorspace="auto" name="texplane" builtin="checker" rgb1="0 0 0" rgb2="0.8 0.8 0.8" width="100" height="100"/>
+    <material name="MatPlane" texture="texplane" texrepeat="60 60" specular="1" shininess="1" reflectance="0.5"/>
+  </asset>
+
+  <worldbody>
+    <geom name="floor" size="40 40 40" type="plane" conaffinity="1" material="MatPlane" rgba="0.8 0.9 0.8 1"/>
+    <light pos="0 0 1.3" dir="0 0 -1" type="directional" cutoff="100" diffuse="1 1 1" specular="0.1 0.1 0.1"/>
+    <body name="torso" pos="0 0 0.439299">
+      <joint name="root" type="free" margin="0.01" armature="0" damping="0"/>
+      <geom name="torso_geom" size="0.18 0.25" quat="0.707107 0 -0.707107 0" type="capsule"/>
+      <camera name="track" pos="0 -3 0.3" quat="0.707107 0.707107 0 0" mode="trackcom"/>
+      <body name="leg1">
+        <geom name="leg1_mount_geom" size="0.06 0.09" pos="0.0779423 0.045 0" quat="0.707107 0.353553 -0.612372 0" type="capsule"/>
+        <body name="leg1_seg1" pos="0.155885 0.09 0">
+          <joint name="leg1_seg1_joint" pos="0 0 0" axis="0 0 1" range="-0.610865 0.610865"/>
+          <geom name="leg1_seg1_geom" size="0.06 0.11" pos="0.0938155 0.0541644 -0.0191013" quat="0.766044 0.321394 -0.55667 0" type="capsule"/>
+          <body name="leg1_seg2" pos="0.187631 0.108329 -0.0382026">
+            <joint name="leg1_seg2_joint" pos="0 0 0" axis="-0.5 0.866025 0" range="-0.785398 0.785398"/>
+            <geom name="leg1_seg2_geom" size="0.06 0.19" pos="0.105767 0.0610648 -0.145548" quat="0.939693 0.17101 -0.296198 0" type="capsule"/>
+          </body>
+        </body>
+      </body>
+      <body name="leg2">
+        <geom name="leg2_mount_geom" size="0.06 0.09" pos="0 0.09 0" quat="0.707107 0.707107 0 0" type="capsule"/>
+        <body name="leg2_seg1" pos="0 0.18 0">
+          <joint name="leg2_seg1_joint" pos="0 0 0" axis="0 0 1" range="-0.610865 0.610865"/>
+          <geom name="leg2_seg1_geom" size="0.06 0.11" pos="0 0.108329 -0.0191013" quat="0.766044 0.642788 0 0" type="capsule"/>
+          <body name="leg2_seg2" pos="0 0.216658 -0.0382026">
+            <joint name="leg2_seg2_joint" pos="0 0 0" axis="-1 0 0" range="-0.785398 0.785398"/>
+            <geom name="leg2_seg2_geom" size="0.06 0.19" pos="0 0.12213 -0.145548" quat="0.939693 0.34202 0 0" type="capsule"/>
+          </body>
+        </body>
+      </body>
+      <body name="leg3">
+        <geom name="leg3_mount_geom" size="0.06 0.09" pos="-0.0779423 0.045 0" quat="0.707107 0.353553 0.612372 0" type="capsule"/>
+        <body name="leg3_seg1" pos="-0.155885 0.09 0">
+          <joint name="leg3_seg1_joint" pos="0 0 0" axis="0 0 1" range="-0.610865 0.610865"/>
+          <geom name="leg3_seg1_geom" size="0.06 0.11" pos="-0.0938155 0.0541644 -0.0191013" quat="0.766044 0.321394 0.55667 0" type="capsule"/>
+          <body name="leg3_seg2" pos="-0.187631 0.108329 -0.0382026">
+            <joint name="leg3_seg2_joint" pos="0 0 0" axis="-0.5 -0.866025 0" range="-0.785398 0.785398"/>
+            <geom name="leg3_seg2_geom" size="0.06 0.19" pos="-0.105767 0.0610648 -0.145548" quat="0.939693 0.17101 0.296198 0" type="capsule"/>
+          </body>
+        </body>
+      </body>
+      <body name="leg4">
+        <geom name="leg4_mount_geom" size="0.06 0.09" pos="-0.0779423 -0.045 0" quat="0.707107 -0.353553 0.612372 0" type="capsule"/>
+        <body name="leg4_seg1" pos="-0.155885 -0.09 0">
+          <joint name="leg4_seg1_joint" pos="0 0 0" axis="0 0 1" range="-0.610865 0.610865"/>
+          <geom name="leg4_seg1_geom" size="0.06 0.11" pos="-0.0938155 -0.0541644 -0.0191013" quat="0.766044 -0.321394 0.55667 0" type="capsule"/>
+          <body name="leg4_seg2" pos="-0.187631 -0.108329 -0.0382026">
+            <joint name="leg4_seg2_joint" pos="0 0 0" axis="0.5 -0.866025 0" range="-0.785398 0.785398"/>
+            <geom name="leg4_seg2_geom" size="0.06 0.19" pos="-0.105767 -0.0610648 -0.145548" quat="0.939693 -0.17101 0.296198 0" type="capsule"/>
+          </body>
+        </body>
+      </body>
+      <body name="leg5">
+        <geom name="leg5_mount_geom" size="0.06 0.09" pos="0 -0.09 0" quat="0.707107 -0.707107 0 0" type="capsule"/>
+        <body name="leg5_seg1" pos="0 -0.18 0">
+          <joint name="leg5_seg1_joint" pos="0 0 0" axis="0 0 1" range="-0.610865 0.610865"/>
+          <geom name="leg5_seg1_geom" size="0.06 0.11" pos="0 -0.108329 -0.0191013" quat="0.766044 -0.642788 0 0" type="capsule"/>
+          <body name="leg5_seg2" pos="0 -0.216658 -0.0382026">
+            <joint name="leg5_seg2_joint" pos="0 0 0" axis="1 0 0" range="-0.785398 0.785398"/>
+            <geom name="leg5_seg2_geom" size="0.06 0.19" pos="0 -0.12213 -0.145548" quat="0.939693 -0.34202 0 0" type="capsule"/>
+          </body>
+        </body>
+      </body>
+      <body name="leg6">
+        <geom name="leg6_mount_geom" size="0.06 0.09" pos="0.0779423 -0.045 0" quat="0.707107 -0.353553 -0.612372 0" type="capsule"/>
+        <body name="leg6_seg1" pos="0.155885 -0.09 0">
+          <joint name="leg6_seg1_joint" pos="0 0 0" axis="0 0 1" range="-0.610865 0.610865"/>
+          <geom name="leg6_seg1_geom" size="0.06 0.11" pos="0.0938155 -0.0541644 -0.0191013" quat="0.766044 -0.321394 -0.55667 0" type="capsule"/>
+          <body name="leg6_seg2" pos="0.187631 -0.108329 -0.0382026">
+            <joint name="leg6_seg2_joint" pos="0 0 0" axis="0.5 0.866025 0" range="-0.785398 0.785398"/>
+            <geom name="leg6_seg2_geom" size="0.06 0.19" pos="0.105767 -0.0610648 -0.145548" quat="0.939693 -0.17101 -0.296198 0" type="capsule"/>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <general name="leg1_seg1_motor" joint="leg1_seg1_joint" ctrllimited="true" ctrlrange="-1 1" gear="120 0 0 0 0 0"/>
+    <general name="leg1_seg2_motor" joint="leg1_seg2_joint" ctrllimited="true" ctrlrange="-1 1" gear="120 0 0 0 0 0"/>
+    <general name="leg2_seg1_motor" joint="leg2_seg1_joint" ctrllimited="true" ctrlrange="-1 1" gear="120 0 0 0 0 0"/>
+    <general name="leg2_seg2_motor" joint="leg2_seg2_joint" ctrllimited="true" ctrlrange="-1 1" gear="120 0 0 0 0 0"/>
+    <general name="leg3_seg1_motor" joint="leg3_seg1_joint" ctrllimited="true" ctrlrange="-1 1" gear="120 0 0 0 0 0"/>
+    <general name="leg3_seg2_motor" joint="leg3_seg2_joint" ctrllimited="true" ctrlrange="-1 1" gear="120 0 0 0 0 0"/>
+    <general name="leg4_seg1_motor" joint="leg4_seg1_joint" ctrllimited="true" ctrlrange="-1 1" gear="120 0 0 0 0 0"/>
+    <general name="leg4_seg2_motor" joint="leg4_seg2_joint" ctrllimited="true" ctrlrange="-1 1" gear="120 0 0 0 0 0"/>
+    <general name="leg5_seg1_motor" joint="leg5_seg1_joint" ctrllimited="true" ctrlrange="-1 1" gear="120 0 0 0 0 0"/>
+    <general name="leg5_seg2_motor" joint="leg5_seg2_joint" ctrllimited="true" ctrlrange="-1 1" gear="120 0 0 0 0 0"/>
+    <general name="leg6_seg1_motor" joint="leg6_seg1_joint" ctrllimited="true" ctrlrange="-1 1" gear="120 0 0 0 0 0"/>
+    <general name="leg6_seg2_motor" joint="leg6_seg2_joint" ctrllimited="true" ctrlrange="-1 1" gear="120 0 0 0 0 0"/>
+  </actuator>
+</mujoco>
