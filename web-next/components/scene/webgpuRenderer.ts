@@ -24,6 +24,49 @@ const GROUND_SIZE = 240; // large enough to fill the view; edges fade to backdro
 const GRID_CELL = 1; // meters per grid cell
 const SNAP = GRID_CELL; // recenter step so world-locked grid never appears to slide
 
+// Per-body external force arrows, drawn from MuJoCo's cfrc_ext — the 6D spatial
+// force [torque(3), force(3)] on each body (the same quantity Ant feeds into its
+// observation). We draw one arrow per body for the translational force and,
+// optionally, one for the rotational torque, each in its own color. Real forces
+// here are only a few newtons, so length = magnitude * a user "scale", clamped,
+// with tiny values culled so the agent isn't buried in jitter arrows.
+const FORCE_MIN = 0.05; // cull arrows whose magnitude is below this (N or N·m)
+const FORCE_MAX_LEN = 3; // m: clamp very large forces so they stay on-screen
+const ARROW_SHAFT_R = 0.022; // shaft radius (m)
+const ARROW_HEAD_R = 0.07; // arrowhead base radius (m)
+const ARROW_HEAD_LEN = 0.16; // arrowhead length at full scale (m)
+
+const _forceUp = new THREE.Vector3(0, 1, 0);
+const _forceDir = new THREE.Vector3();
+
+/** User-tunable force visualization (Scene panel). Colors are 0xRRGGBB. */
+export interface ForceVizCfg {
+  /** Draw the translational force component (cfrc_ext[3..5]). */
+  force: boolean;
+  /** Draw the rotational torque component (cfrc_ext[0..2]) along its axis. */
+  torque: boolean;
+  forceColor: number;
+  torqueColor: number;
+  /** Meters of arrow length per unit magnitude (N or N·m). */
+  scale: number;
+}
+
+export const DEFAULT_FORCE_VIZ: ForceVizCfg = {
+  force: true,
+  torque: false,
+  forceColor: 0xff4d3d, // warm red — the conventional "force" hue
+  torqueColor: 0x38bdf8, // cyan — clearly distinct from the force red
+  scale: 0.15,
+};
+
+/** One reusable arrow: a group (positioned + oriented per body) holding a
+ * stretched shaft and a fixed-proportion head, both along the group's local +Y. */
+interface ForceArrow {
+  group: THREE.Group;
+  shaft: THREE.Mesh;
+  head: THREE.Mesh;
+}
+
 export type Backend = "webgpu" | "webgl";
 
 function hex(n: number): string {
@@ -82,6 +125,18 @@ export class WebGPURenderer implements RendererLike {
   private bodies: THREE.Group[] = [];
   private robotMats: THREE.MeshStandardNodeMaterial[] = [];
   private foodMarker: THREE.Mesh | null = null;
+  // Force visualization: a container under `root` holding two lazily-grown pools
+  // of arrows (one per force-bearing body) — translational force and rotational
+  // torque — plus shared geometry and a per-type material.
+  private forcesGroup!: THREE.Group;
+  private forceArrows: ForceArrow[] = [];
+  private torqueArrows: ForceArrow[] = [];
+  private forceShaftGeo: THREE.CylinderGeometry | null = null;
+  private forceHeadGeo: THREE.ConeGeometry | null = null;
+  private forceMat: THREE.MeshBasicNodeMaterial | null = null;
+  private torqueMat: THREE.MeshBasicNodeMaterial | null = null;
+  private showForces = false;
+  private forceViz: ForceVizCfg = { ...DEFAULT_FORCE_VIZ };
   private torsoIndex = 1;
   private ready = false;
   private resizeObserver: ResizeObserver | null = null;
@@ -150,6 +205,13 @@ export class WebGPURenderer implements RendererLike {
     this.foodMarker.castShadow = true;
     this.foodMarker.visible = false;
     this.root.add(this.foodMarker);
+
+    // Force arrows live under `root` too, so their MuJoCo-frame positions and
+    // directions get the same Z-up -> Y-up rotation as the bodies. Hidden until
+    // the user turns on the Scene panel's "Show forces" toggle.
+    this.forcesGroup = new THREE.Group();
+    this.forcesGroup.visible = false;
+    this.root.add(this.forcesGroup);
   }
 
   /** A slightly lighter tint of the current backdrop for the top of the
@@ -376,6 +438,25 @@ export class WebGPURenderer implements RendererLike {
     this.bloomStrength = v;
     if (this.bloomPass) this.bloomPass.strength.value = v;
   }
+  /** Master toggle for the per-body force arrows (MuJoCo cfrc_ext). When off the
+   * whole container is hidden; the pooled arrows are kept for reuse. */
+  setShowForces(on: boolean): void {
+    this.showForces = on;
+    this.forcesGroup.visible = on;
+    if (!on) {
+      for (const a of this.forceArrows) a.group.visible = false;
+      for (const a of this.torqueArrows) a.group.visible = false;
+    }
+  }
+
+  /** Update the force-viz detail options (which components to draw, their colors,
+   * and the magnitude->length scale). */
+  setForceViz(cfg: ForceVizCfg): void {
+    this.forceViz = { ...cfg };
+    this.ensureForceAssets();
+    this.forceMat!.color.set(cfg.forceColor);
+    this.torqueMat!.color.set(cfg.torqueColor);
+  }
 
   /** Current effective scene colors (so the Scene panel can seed its inputs). */
   sceneColors(): { bg: number; ground: number; grid: number; agent: number } {
@@ -507,6 +588,8 @@ export class WebGPURenderer implements RendererLike {
       }
     }
 
+    this.updateForceArrows(sim);
+
     const mx = xpos[this.torsoIndex * 3 + 0];
     const my = xpos[this.torsoIndex * 3 + 1];
     if (Number.isFinite(mx) && Number.isFinite(my)) {
@@ -525,6 +608,111 @@ export class WebGPURenderer implements RendererLike {
         this.camera.position.copy(this.controls.target).add(this.camOffset);
       }
     }
+  }
+
+  /** Lazily create the shared arrow geometry (unit shaft + head, both along +Y
+   * with their base at the local origin) and the per-type materials. */
+  private ensureForceAssets(): void {
+    if (!this.forceMat) {
+      const mat = new THREE.MeshBasicNodeMaterial({ color: this.forceViz.forceColor });
+      mat.toneMapped = false; // keep the color punchy regardless of exposure
+      this.forceMat = mat;
+    }
+    if (!this.torqueMat) {
+      const mat = new THREE.MeshBasicNodeMaterial({ color: this.forceViz.torqueColor });
+      mat.toneMapped = false;
+      this.torqueMat = mat;
+    }
+    if (!this.forceShaftGeo) {
+      const geo = new THREE.CylinderGeometry(ARROW_SHAFT_R, ARROW_SHAFT_R, 1, 12);
+      geo.translate(0, 0.5, 0); // base at origin, extends up +Y (scale.y = length)
+      this.forceShaftGeo = geo;
+    }
+    if (!this.forceHeadGeo) {
+      const geo = new THREE.ConeGeometry(ARROW_HEAD_R, ARROW_HEAD_LEN, 16);
+      geo.translate(0, ARROW_HEAD_LEN / 2, 0); // base at origin, tip up +Y
+      this.forceHeadGeo = geo;
+    }
+  }
+
+  /** Add a fresh arrow (of the given material) to a pool and the container. */
+  private makeArrow(mat: THREE.MeshBasicNodeMaterial, pool: ForceArrow[]): ForceArrow {
+    this.ensureForceAssets();
+    const group = new THREE.Group();
+    const shaft = new THREE.Mesh(this.forceShaftGeo!, mat);
+    const head = new THREE.Mesh(this.forceHeadGeo!, mat);
+    group.add(shaft, head);
+    this.forcesGroup.add(group);
+    const arrow: ForceArrow = { group, shaft, head };
+    pool.push(arrow);
+    return arrow;
+  }
+
+  /** Size an arrow to total length `len` (m): stretch the shaft, keep the head's
+   * proportions but shrink it for very short arrows so the tip never overruns. */
+  private setArrowLength(a: ForceArrow, len: number): void {
+    const headLen = Math.min(ARROW_HEAD_LEN, len * 0.4);
+    const shaftLen = Math.max(len - headLen, 1e-4);
+    a.shaft.scale.y = shaftLen;
+    a.head.position.y = shaftLen;
+    a.head.scale.setScalar(headLen / ARROW_HEAD_LEN);
+  }
+
+  /** Draw an arrow at each body's origin for its external force and/or torque,
+   * reading MuJoCo's cfrc_ext (the [torque(3), force(3)] spatial force per body,
+   * world frame). No-op unless "Show forces" is on. Recomputes cfrc_ext each
+   * frame so the arrows track the current substep, not the last control step. */
+  private updateForceArrows(sim: MujocoSim): void {
+    if (!this.showForces) return;
+    this.ensureForceAssets(); // materials/geometry must exist before pooling arrows
+
+    sim.computeContactForces();
+    const d = sim.data as unknown as { xpos: Float64Array; cfrc_ext: Float64Array };
+    const xpos = d.xpos;
+    const cfrc = d.cfrc_ext;
+    const nbody = this.bodies.length;
+    if (!xpos || !cfrc || cfrc.length < nbody * 6) return;
+
+    const { force, torque, scale } = this.forceViz;
+    let nF = 0;
+    let nT = 0;
+    // Skip body 0 (worldbody): it carries the reaction forces, not the agent's.
+    for (let b = 1; b < nbody; b++) {
+      const px = xpos[b * 3 + 0], py = xpos[b * 3 + 1], pz = xpos[b * 3 + 2];
+      if (!Number.isFinite(px) || !Number.isFinite(py) || !Number.isFinite(pz)) continue;
+
+      // cfrc_ext row layout: [torque(0..2), force(3..5)].
+      if (force) {
+        const fx = cfrc[b * 6 + 3], fy = cfrc[b * 6 + 4], fz = cfrc[b * 6 + 5];
+        const mag = Math.hypot(fx, fy, fz);
+        if (mag > FORCE_MIN) {
+          const a = this.forceArrows[nF] ?? this.makeArrow(this.forceMat!, this.forceArrows);
+          a.group.visible = true;
+          a.group.position.set(px, py, pz);
+          _forceDir.set(fx / mag, fy / mag, fz / mag);
+          a.group.quaternion.setFromUnitVectors(_forceUp, _forceDir);
+          this.setArrowLength(a, Math.min(mag * scale, FORCE_MAX_LEN));
+          nF++;
+        }
+      }
+      if (torque) {
+        const tx = cfrc[b * 6 + 0], ty = cfrc[b * 6 + 1], tz = cfrc[b * 6 + 2];
+        const mag = Math.hypot(tx, ty, tz);
+        if (mag > FORCE_MIN) {
+          const a = this.torqueArrows[nT] ?? this.makeArrow(this.torqueMat!, this.torqueArrows);
+          a.group.visible = true;
+          a.group.position.set(px, py, pz);
+          _forceDir.set(tx / mag, ty / mag, tz / mag);
+          a.group.quaternion.setFromUnitVectors(_forceUp, _forceDir);
+          this.setArrowLength(a, Math.min(mag * scale, FORCE_MAX_LEN));
+          nT++;
+        }
+      }
+    }
+
+    // Hide arrows left over from a busier frame (or a now-disabled component).
+    for (let i = nF; i < this.forceArrows.length; i++) this.forceArrows[i].group.visible = false;
+    for (let i = nT; i < this.torqueArrows.length; i++) this.torqueArrows[i].group.visible = false;
   }
 
   render(): Promise<void> | void {
@@ -552,6 +740,10 @@ export class WebGPURenderer implements RendererLike {
     this.resizeObserver?.disconnect();
     this.controls.dispose();
     this.envTexture?.dispose();
+    this.forceShaftGeo?.dispose();
+    this.forceHeadGeo?.dispose();
+    this.forceMat?.dispose();
+    this.torqueMat?.dispose();
     try {
       (this.renderer as unknown as { dispose?: () => void }).dispose?.();
     } catch {

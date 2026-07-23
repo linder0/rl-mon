@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { PanelViewToggle, type PanelView } from "@/components/PanelViewToggle";
+import type { ForceVizCfg } from "@/components/scene/webgpuRenderer";
 
 export interface SceneCfg {
   bg: number;
@@ -16,6 +17,8 @@ export interface SceneCfg {
   grid: number;
   agent: number;
   gridOn: boolean;
+  showForces: boolean;
+  forceViz: ForceVizCfg;
   bloom: number;
 }
 
@@ -31,6 +34,8 @@ interface ScenePanelProps {
   onGround: (hex: number) => void;
   onGrid: (hex: number) => void;
   onGridOn: (on: boolean) => void;
+  onShowForces: (on: boolean) => void;
+  onForceViz: (patch: Partial<ForceVizCfg>) => void;
   onAgent: (hex: number) => void;
   onBloom: (v: number) => void;
 }
@@ -125,6 +130,84 @@ function ScenePanelImpl(props: ScenePanelProps) {
               onCheckedChange={(c) => props.onGridOn(Boolean(c))}
             />
           </div>
+
+          <div className="flex items-center justify-between">
+            <Label htmlFor="showForces" className="text-label text-muted-foreground">
+              Show forces
+            </Label>
+            <Switch
+              id="showForces"
+              size="sm"
+              checked={cfg.showForces}
+              onCheckedChange={(c) => props.onShowForces(Boolean(c))}
+            />
+          </div>
+
+          {cfg.showForces && (
+            <div className="space-y-2 rounded-md border border-border/60 p-2.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="forceOn" className="text-label text-muted-foreground">
+                  Force
+                </Label>
+                <div className="flex items-center gap-2">
+                  {cfg.forceViz.force && (
+                    <input
+                      type="color"
+                      value={toHex(cfg.forceViz.forceColor)}
+                      onChange={(e) => props.onForceViz({ forceColor: toNum(e.target.value) })}
+                      className="h-6 w-9 cursor-pointer rounded border border-border bg-transparent p-0.5"
+                      aria-label="Force color"
+                    />
+                  )}
+                  <Switch
+                    id="forceOn"
+                    size="sm"
+                    checked={cfg.forceViz.force}
+                    onCheckedChange={(c) => props.onForceViz({ force: Boolean(c) })}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="torqueOn" className="text-label text-muted-foreground">
+                  Torque
+                </Label>
+                <div className="flex items-center gap-2">
+                  {cfg.forceViz.torque && (
+                    <input
+                      type="color"
+                      value={toHex(cfg.forceViz.torqueColor)}
+                      onChange={(e) => props.onForceViz({ torqueColor: toNum(e.target.value) })}
+                      className="h-6 w-9 cursor-pointer rounded border border-border bg-transparent p-0.5"
+                      aria-label="Torque color"
+                    />
+                  )}
+                  <Switch
+                    id="torqueOn"
+                    size="sm"
+                    checked={cfg.forceViz.torque}
+                    onCheckedChange={(c) => props.onForceViz({ torque: Boolean(c) })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-label">
+                  <span className="text-muted-foreground">Scale</span>
+                  <span className="font-medium tabular-nums">{cfg.forceViz.scale.toFixed(2)}</span>
+                </div>
+                <Slider
+                  value={[cfg.forceViz.scale]}
+                  min={0.02}
+                  max={1}
+                  step={0.01}
+                  onValueChange={(v) =>
+                    props.onForceViz({ scale: Array.isArray(v) ? v[0] : (v as number) })
+                  }
+                />
+              </div>
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-label">

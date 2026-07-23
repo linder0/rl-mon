@@ -322,6 +322,8 @@ export default function IterationView({
             onGround={scene3d.onGround}
             onGrid={scene3d.onGrid}
             onGridOn={scene3d.onGridOn}
+            onShowForces={scene3d.onShowForces}
+            onForceViz={scene3d.onForceViz}
             onAgent={scene3d.onAgent}
             onBloom={scene3d.onBloom}
           />

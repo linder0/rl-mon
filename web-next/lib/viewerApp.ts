@@ -3,7 +3,7 @@ import { Policy } from "./policy";
 import { SimLoop, type LoopStats, type ParityResult } from "./loop";
 import { PolicyNet } from "./net";
 import { NetVizController } from "./netvizController";
-import { WebGPURenderer, type Backend } from "@/components/scene/webgpuRenderer";
+import { WebGPURenderer, type Backend, type ForceVizCfg } from "@/components/scene/webgpuRenderer";
 import { asset, loadJson, defaultVariant, type Variant } from "./catalog";
 import type { Theme } from "./theme";
 import type {
@@ -48,6 +48,8 @@ export interface ViewerInit {
   follow?: boolean;
   netCollapsed?: boolean;
   gridOn?: boolean;
+  showForces?: boolean;
+  forceViz?: ForceVizCfg;
   bloom?: number;
   /** Per-theme scene color overrides; the entry for the active theme is applied
    * on startup and whenever the theme changes. */
@@ -137,6 +139,8 @@ export class ViewerApp {
       const backend = await this.renderer.init();
       this.cb.onBackend(backend);
       if (this.init.gridOn !== undefined) this.renderer.setGridVisible(this.init.gridOn);
+      if (this.init.forceViz !== undefined) this.renderer.setForceViz(this.init.forceViz);
+      if (this.init.showForces !== undefined) this.renderer.setShowForces(this.init.showForces);
       if (this.init.bloom !== undefined) this.renderer.setBloomStrength(this.init.bloom);
       this.applyColorOverride();
     } catch (err) {
@@ -224,6 +228,12 @@ export class ViewerApp {
   }
   setGridVisible(on: boolean): void {
     this.renderer.setGridVisible(on);
+  }
+  setShowForces(on: boolean): void {
+    this.renderer.setShowForces(on);
+  }
+  setForceViz(cfg: ForceVizCfg): void {
+    this.renderer.setForceViz(cfg);
   }
   setAgentColor(hex: number | null): void {
     this.renderer.setAgentColor(hex);

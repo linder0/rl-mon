@@ -4,10 +4,11 @@
  * wiring shell: scene-color persistence and the learning-mode scrubber. Both
  * talk to the ViewerApp through the ref that IterationView owns. */
 
-import { useCallback, useEffect, useState, type RefObject } from "react";
+import { useCallback, useEffect, useMemo, useState, type RefObject } from "react";
 import type { LearningState, SceneColors, ViewerApp, ViewerInit } from "@/lib/viewerApp";
 import { usePersistentState, readPersisted } from "@/lib/persist";
 import { SCENE_THEMES, type Theme } from "@/lib/theme";
+import { DEFAULT_FORCE_VIZ, type ForceVizCfg } from "@/components/scene/webgpuRenderer";
 import type { SceneCfg } from "@/components/ScenePanel";
 
 // Seed the Scene panel from the dark theme's scene colors so there's one source
@@ -19,20 +20,30 @@ const DEFAULT_SCENE: SceneCfg = {
   grid: SCENE_THEMES.dark.grid1,
   agent: SCENE_THEMES.dark.robot,
   gridOn: true,
+  showForces: false,
+  forceViz: DEFAULT_FORCE_VIZ,
   bloom: 0.5,
 };
 
 type ColorsByTheme = Partial<Record<Theme, SceneColors>>;
 const COLORS_KEY = "sceneColors";
 
+/** Fill in any keys missing from a persisted scene config (older saves predate
+ * showForces/forceViz), so consumers always see a complete, valid config. */
+function normalizeScene(cfg: SceneCfg): SceneCfg {
+  return { ...DEFAULT_SCENE, ...cfg, forceViz: { ...DEFAULT_FORCE_VIZ, ...cfg.forceViz } };
+}
+
 /** Reads persisted UI prefs so they can seed the ViewerApp on startup. */
 export function readViewerInit(): ViewerInit {
-  const scene = readPersisted<SceneCfg>("sceneCfg", DEFAULT_SCENE);
+  const scene = normalizeScene(readPersisted<SceneCfg>("sceneCfg", DEFAULT_SCENE));
   return {
     speed: readPersisted("speed", 1),
     follow: readPersisted("follow", true),
     netCollapsed: readPersisted("netCollapsed", false),
     gridOn: scene.gridOn,
+    showForces: scene.showForces,
+    forceViz: scene.forceViz,
     bloom: scene.bloom,
     colorOverrides: readPersisted<ColorsByTheme>(COLORS_KEY, {}),
   };
@@ -49,8 +60,11 @@ export function useSceneColors(appRef: RefObject<ViewerApp | null>, theme: Theme
   // gridOn/bloom are theme-independent and persisted here; the colors in
   // sceneCfg are display state kept in sync with the renderer. Custom colors
   // persist per theme in colorsByTheme.
-  const [sceneCfg, setSceneCfg] = usePersistentState<SceneCfg>("sceneCfg", DEFAULT_SCENE);
+  const [rawSceneCfg, setSceneCfg] = usePersistentState<SceneCfg>("sceneCfg", DEFAULT_SCENE);
   const [, setColorsByTheme] = usePersistentState<ColorsByTheme>(COLORS_KEY, {});
+  // Backfill any keys older saves lack, with a stable identity so the memoized
+  // ScenePanel doesn't re-render on unrelated parent updates.
+  const sceneCfg = useMemo(() => normalizeScene(rawSceneCfg), [rawSceneCfg]);
 
   const applyFromApp = useCallback(
     (c: SceneColors) =>
@@ -90,6 +104,25 @@ export function useSceneColors(appRef: RefObject<ViewerApp | null>, theme: Theme
     },
     [appRef, setSceneCfg],
   );
+  const onShowForces = useCallback(
+    (on: boolean) => {
+      appRef.current?.setShowForces(on);
+      setSceneCfg((s) => ({ ...s, showForces: on }));
+    },
+    [appRef, setSceneCfg],
+  );
+  /** Patch the force-viz detail options (component toggles, colors, scale),
+   * pushing the merged config to the renderer and persisting it. */
+  const onForceViz = useCallback(
+    (patch: Partial<ForceVizCfg>) => {
+      setSceneCfg((s) => {
+        const next: ForceVizCfg = { ...DEFAULT_FORCE_VIZ, ...s.forceViz, ...patch };
+        appRef.current?.setForceViz(next);
+        return { ...s, forceViz: next };
+      });
+    },
+    [appRef, setSceneCfg],
+  );
   const onBloom = useCallback(
     (v: number) => {
       appRef.current?.setBloomStrength(v);
@@ -98,7 +131,18 @@ export function useSceneColors(appRef: RefObject<ViewerApp | null>, theme: Theme
     [appRef, setSceneCfg],
   );
 
-  return { sceneCfg, applyFromApp, onBg, onGround, onGrid, onGridOn, onAgent, onBloom };
+  return {
+    sceneCfg,
+    applyFromApp,
+    onBg,
+    onGround,
+    onGrid,
+    onGridOn,
+    onShowForces,
+    onForceViz,
+    onAgent,
+    onBloom,
+  };
 }
 
 /**
