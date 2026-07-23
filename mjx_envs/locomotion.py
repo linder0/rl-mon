@@ -22,6 +22,8 @@ from mujoco import mjx
 from brax.envs.base import PipelineEnv, State
 from brax.io import mjcf as brax_mjcf
 
+from mjx_envs import monsters
+
 ASSETS_DIR = os.path.join(os.path.dirname(_gym_mujoco.__file__), "assets")
 
 
@@ -40,7 +42,11 @@ class GymLocomotionEnv(PipelineEnv):
 
     def __init__(self):
         path = os.path.join(ASSETS_DIR, self.xml_file)
-        mj_model = mujoco.MjModel.from_xml_path(path)
+        self._init_from_model(mujoco.MjModel.from_xml_path(path))
+
+    def _init_from_model(self, mj_model):
+        """Finish construction from an already-built MjModel (the gym asset
+        for the ports; an in-memory generated model for MonsterMjx)."""
         sys = brax_mjcf.load_model(mj_model)
         super().__init__(sys=sys, backend="mjx", n_frames=self.frame_skip)
         self._init_qpos = jnp.asarray(mj_model.qpos0)
@@ -541,6 +547,44 @@ class AntGetUpMjx(AntMjx):
         return spec
 
 
+class MonsterMjx(AntMjx):
+    """Forward locomotion for a generated monster morphology (mjx_envs/
+    monsters.py). The task is Ant's — run +x, stay healthy, pay ctrl and
+    contact costs — but the body is built from a MonsterSpec instead of
+    ant.xml, so obs/action sizes vary per monster.
+
+    A *custom* env (not a gymnasium port): kept out of the parity gate.
+    Health = Ant's finite + z-range check (the range derived from the spec's
+    standing geometry unless it overrides healthy_z_range), plus the same
+    anti-flip upright test the food envs use, since a monster on its back
+    often still satisfies a height-only check."""
+
+    healthy_upright_min = 0.0  # None disables the upright requirement
+
+    def __init__(self, spec):
+        self.monster_spec = spec
+        self.xml_file = f"monsters/{spec.name}.xml"  # instance-level, generated
+        self.healthy_z_range = (spec.healthy_z_range
+                                or monsters.default_healthy_z_range(spec))
+        self._init_from_model(monsters.spec_to_model(spec))
+
+    def is_healthy(self, data):
+        base = super().is_healthy(data)
+        if self.healthy_upright_min is None:
+            return base
+        up_z = jnp.asarray(data.xmat)[self.main_body].reshape(-1)[8]
+        return base & (up_z > self.healthy_upright_min)
+
+    def task_spec(self):
+        spec = super().task_spec()
+        spec["task"] = "monster locomotion: run +x with a generated morphology"
+        spec["healthy"]["upright_min"] = self.healthy_upright_min
+        # The full morphology, so the run is reproducible from config.json
+        # alone even if the preset/generator changes later.
+        spec["monster"] = monsters.spec_to_dict(self.monster_spec)
+        return spec
+
+
 ENVS = {
     "Hopper-v5": HopperMjx,
     "Walker2d-v5": Walker2dMjx,
@@ -559,7 +603,16 @@ ALL_ENVS = {**ENVS, **CUSTOM_ENVS}
 
 
 def make_env(env_id: str) -> GymLocomotionEnv:
+    # Monster-<name>-v0 ids resolve through the monster registry (presets or
+    # assets/monsters/<name>.spec.json), so any generated morphology is
+    # trainable by id without touching this table.
+    monster_name = monsters.name_from_env_id(env_id)
+    if monster_name is not None:
+        return MonsterMjx(monsters.load_spec(monster_name))
     if env_id not in ALL_ENVS:
         raise ValueError(
-            f"No MJX env for {env_id!r}. Available: {sorted(ALL_ENVS)}")
+            f"No MJX env for {env_id!r}. Available: {sorted(ALL_ENVS)} "
+            f"plus {monsters.ENV_PREFIX}<name>-{monsters.ENV_VERSION} for "
+            f"monsters {sorted(monsters.MONSTERS)} or any "
+            "assets/monsters/<name>.spec.json")
     return ALL_ENVS[env_id]()

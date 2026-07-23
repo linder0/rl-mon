@@ -24,6 +24,7 @@ All envs live in `mjx_envs/locomotion.py`. Two groups:
 | `Ant-v5` | `AntMjx` | 105 | forward x-velocity + survive − ctrl − contact | torso z ∉ [0.2, 1.0] |
 | `AntFood-v5` | `AntFoodMjx` | 107 | approach food + pickup bonus + survive − ctrl − contact | torso z ∉ [0.2, 1.0] **or flipped** |
 | `AntFood2Leg-v5` | `AntFood2LegMjx` | 107 | same, but pickup needs ≥2 feet on the food | torso z ∉ [0.2, 1.0] **or flipped** |
+| `Monster-<name>-v0` | `MonsterMjx` | varies | Ant's task on a generated morphology | geometry-derived z range **or flipped** |
 
 ### Faithful ports (Hopper / Walker2d / Ant)
 
@@ -56,6 +57,36 @@ collection requires **≥ `min_feet` (default 2) of the four ankle geoms within
 `foot_radius` (default 0.5 m)** of the food, instead of the torso being close.
 Same 107-dim observation, so it can be **warm-started** from an AntFood policy
 (`--init-from`). Meaningfully harder: the ant must straddle the target.
+
+### Monsters — parametric morphologies
+
+`MonsterMjx` runs Ant's locomotion task (forward x-velocity + survive − ctrl −
+contact, Ant-style observation) on a body generated from a `MonsterSpec`
+(`mjx_envs/monsters.py`): a torso plus limbs, each limb a chain of actuated
+capsule segments with per-segment lengths, tilts, joint ranges, and motor
+gears. `radial(n, leg)` / `bilateral(leg)` build symmetric layouts in one line.
+
+Env ids are `Monster-<name>-v0`, where `<name>` is a preset (`quad`,
+`hexapod`, `biped_tail`, `spider8`) or any spec written to
+`assets/monsters/<name>.spec.json` — e.g. a random morphology from
+`--sample`. Obs/action sizes vary per monster (one policy per monster). The
+full spec is embedded in `task_spec`, so each run's `config.json` records the
+exact body it trained on, and the export rebuilds that body from the run's
+config (not the current presets).
+
+```bash
+python -m mjx_envs.monsters --list                 # presets + env ids
+python -m mjx_envs.monsters --preview quad         # sanity check + viewer (macOS: mjpython)
+python -m mjx_envs.monsters --sample --seed 3      # random monster -> assets/monsters/
+python train_mjx.py --env Monster-quad-v0
+python export_onnx.py --run runs/monster-quad/<run>
+```
+
+Health is Ant-style (finite state + torso z inside a range derived from the
+spec's standing height, overridable via `healthy_z_range`) plus the anti-flip
+upright check below. Monsters are custom envs (no gym counterpart, no parity
+gate) but are pure MuJoCo, so exports keep the deterministic parity trace and
+the C-MuJoCo sim2sim transfer check.
 
 ### Anti-flip (upright termination)
 

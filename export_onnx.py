@@ -25,10 +25,12 @@ Usage:
 import argparse
 import copy
 import csv
+import hashlib
 import json
 import os
 import pickle
 import shutil
+import tempfile
 
 import numpy as np
 import torch
@@ -40,6 +42,9 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import VecNormalize
 
 from rl_common import DEFAULT_ENV_ID, env_from_config, env_label, resolve_latest
+# Dependency-light (mujoco + stdlib): safe in this torch venv. mjx_envs/
+# __init__.py lazy-loads the jax side, so this does not pull in jax/brax.
+from mjx_envs import monsters as monster_specs
 
 DEFAULT_OUT = "web-next/public"
 CURVE_POINTS = 300  # downsample training/eval curves to at most this many points
@@ -645,6 +650,82 @@ def introspect_antfood2leg():
     return spec
 
 
+# -- Parametric monsters (mjx_envs/monsters.py) ------------------------------
+
+def introspect_monster(env_id, run_dir=None):
+    """Spec for a generated monster morphology. No gymnasium counterpart, but
+    unlike the food tasks the whole env is plain MuJoCo (Ant's observation and
+    stepping on a generated body), so the deterministic parity trace and the
+    C-MuJoCo transfer check both apply.
+
+    The morphology is taken from the run's config.json (task_spec.monster) when
+    available — the exact body the policy trained on — falling back to the
+    current preset/assets registry. The model XML is regenerated from that spec
+    and named with a content hash, so exports of differently-tuned monsters
+    with the same name can never collide in models/."""
+    name = monster_specs.name_from_env_id(env_id)
+    m = None
+    if run_dir:
+        cfg_path = os.path.join(run_dir, "config.json")
+        if os.path.exists(cfg_path):
+            try:
+                recorded = json.load(open(cfg_path)).get("task_spec", {}).get("monster")
+            except Exception:
+                recorded = None
+            if recorded:
+                m = monster_specs.spec_from_dict(recorded)
+    if m is None:
+        m = monster_specs.load_spec(name)
+
+    xml = monster_specs.spec_to_xml(m)
+    digest = hashlib.sha256(xml.encode()).hexdigest()[:8]
+    model_xml = f"monster_{m.name}_{digest}.xml"
+    fullpath = os.path.join(tempfile.gettempdir(), model_xml)
+    with open(fullpath, "w") as f:
+        f.write(xml)
+    model = mujoco.MjModel.from_xml_path(fullpath)
+
+    healthy_z = list(m.healthy_z_range or monster_specs.default_healthy_z_range(m))
+    components = [
+        {"kind": "qpos", "start": 2, "clip": None},
+        {"kind": "qvel", "start": 0, "clip": None},   # Ant-style: not clipped
+        {"kind": "cfrc_ext", "start_body": 1, "clip": [-1.0, 1.0]},
+    ]
+    obs_dim = (model.nq - 2) + model.nv + 6 * (model.nbody - 1)
+    frame_skip = monster_specs.FRAME_SKIP
+    return {
+        "env_id": env_id,
+        "model_xml": model_xml,
+        "obs_dim": obs_dim,
+        "act_dim": int(model.nu),
+        "nq": int(model.nq),
+        "nv": int(model.nv),
+        "nu": int(model.nu),
+        "frame_skip": frame_skip,
+        "timestep": float(model.opt.timestep),
+        "dt": float(model.opt.timestep) * frame_skip,
+        "action_low": model.actuator_ctrlrange[:, 0].astype(float).tolist(),
+        "action_high": model.actuator_ctrlrange[:, 1].astype(float).tolist(),
+        "obs_components": components,
+        "needs_rne": True,
+        "init_qpos": model.qpos0.astype(float).tolist(),
+        "init_qvel": [0.0] * int(model.nv),
+        "reset_noise_scale": monster_specs.RESET_NOISE_SCALE,
+        "healthy": {
+            "terminate_when_unhealthy": True,
+            "z_index": 2,          # free-joint torso: qpos = [x, y, z, quat, ...]
+            "z_range": healthy_z,
+            "angle_index": 3,
+            "angle_range": None,   # upright-ness is not replayed in the viewer
+            "state_range": None,
+        },
+        "monster": monster_specs.spec_to_dict(m),
+        "obs_labels": build_obs_labels(model, components),
+        "action_labels": build_action_labels(model),
+        "fullpath": fullpath,
+    }
+
+
 def synthetic_parity_trace(onnxable, mean, std, obs_dim, n_steps, seed=0):
     """Parity trace for envs whose full step the browser can't replay in
     C-MuJoCo (AntFood tracks the food target in JS). The viewer's parity check
@@ -883,9 +964,15 @@ def json_safe(obj, big=1e30):
     return obj
 
 
-def get_spec(env_id):
+def get_spec(env_id, run_dir=None):
     """Introspect an env into the viewer's sim spec. Returns (spec, custom)
-    where custom flags the JS-tracked foraging/get-up tasks."""
+    where custom flags the envs whose full step C-MuJoCo can't replay (the
+    JS-tracked foraging/get-up tasks). Monsters are custom-*built* but fully
+    C-MuJoCo-replayable, so they keep the deterministic parity trace and the
+    sim2sim transfer check. run_dir lets monster exports rebuild the exact
+    morphology recorded in that run's config.json."""
+    if monster_specs.name_from_env_id(env_id) is not None:
+        return introspect_monster(env_id, run_dir=run_dir), False
     if env_id == ANTFOOD2LEG_ENV_ID:
         spec = introspect_antfood2leg()
     elif env_id == ANTFOOD_ENV_ID:
@@ -997,7 +1084,7 @@ def export_timeline(run_dir, env_id, out, max_frames):
     label = env_label(env_id)
     run_name = os.path.basename(os.path.normpath(run_dir))
     base_id = f"{label}__{run_name}"
-    spec, _ = get_spec(env_id)
+    spec, _ = get_spec(env_id, run_dir=run_dir)
 
     # Nearest-eval-point reward/ep_len for each checkpoint step, for the scrubber.
     stats = read_stats(run_dir)
@@ -1056,7 +1143,7 @@ def export_variant(run_dir, env_id, variant, out, parity_steps, timeline_ref=Non
     models_dir = os.path.join(out, "models")
     os.makedirs(policies_dir, exist_ok=True)
 
-    spec, custom = get_spec(env_id)
+    spec, custom = get_spec(env_id, run_dir=run_dir)
 
     built = build_policy(run_dir, model_path, env_id, spec, trainer, want_nets=True)
     onnxable = built["onnxable"]

@@ -119,6 +119,11 @@ TUNED_BY_ENV = {
     "antgetup": dict(num_timesteps=100_000_000, num_envs=4096, unroll_length=5,
                      batch_size=2048, num_updates_per_batch=4,
                      discounting=0.97, reward_scaling=1.0),
+    # Generated monsters (Monster-<name>-v0, labels monster-*): Ant-like
+    # contact-heavy bodies running Ant's task, so start from Ant's recipe.
+    "monster-*": dict(num_timesteps=100_000_000, num_envs=4096, unroll_length=5,
+                      batch_size=2048, num_updates_per_batch=4,
+                      discounting=0.97, reward_scaling=10.0),
 }
 
 
@@ -167,7 +172,10 @@ def parse_args():
 
 def build_hyperparams(args):
     hp = dict(BRAX_HYPERPARAMS)
-    hp.update(TUNED_BY_ENV.get(env_label(args.env), {}))
+    label = env_label(args.env)
+    if label.startswith("monster-"):
+        label = "monster-*"
+    hp.update(TUNED_BY_ENV.get(label, {}))
     for key in ("num_envs", "unroll_length", "batch_size", "num_minibatches",
                 "num_updates_per_batch", "learning_rate", "lr_schedule",
                 "desired_kl", "entropy_cost", "discounting", "gae_lambda",
